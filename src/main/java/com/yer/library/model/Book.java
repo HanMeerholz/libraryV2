@@ -1,25 +1,27 @@
 package com.yer.library.model;
 
 import com.yer.library.model.attributeconverters.YearAttributeConverter;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.hibernate.Hibernate;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
 import java.time.Year;
+import java.util.Objects;
 
 @Entity(name = "Book")
 @Table(
-        name = "books",
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "book_isbn_unique",
-                        columnNames = "isbn"
-                )
-        }
+        name = "books" //,                               We shouldn't make ISBN unique because of soft delete.
+//        uniqueConstraints = {                          ISBN of non-deleted books should be unique, should be
+//                @UniqueConstraint(                     implemented with business logic.
+//                        name = "book_isbn_unique",
+//                        columnNames = "isbn"
+//                )
+//        }
 )
-@Data
+@Getter
+@Setter
+@ToString
 @AllArgsConstructor
 @NoArgsConstructor
 public class Book {
@@ -78,8 +80,6 @@ public class Book {
             columnDefinition = "TEXT"
     )
     private String type;
-
-
     @Column(
             name = "genre",
             columnDefinition = "TEXT"
@@ -104,5 +104,18 @@ public class Book {
         this.type = type;
         this.genre = genre;
         this.value = value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        Book book = (Book) o;
+        return id != null && Objects.equals(id, book.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

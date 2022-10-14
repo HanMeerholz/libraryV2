@@ -1,16 +1,18 @@
 package com.yer.library.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Columns;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 @Entity(name = "BookCopy")
 @Table(name = "book_copies")
-@Data
+@Getter
+@Setter
+@ToString
 @AllArgsConstructor
 @NoArgsConstructor
 public class BookCopy {
@@ -51,5 +53,18 @@ public class BookCopy {
     public BookCopy(Book book, Location location) {
         this.book = book;
         this.location = location;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        BookCopy bookCopy = (BookCopy) o;
+        return id != null && Objects.equals(id, bookCopy.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

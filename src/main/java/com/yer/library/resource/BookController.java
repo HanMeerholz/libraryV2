@@ -8,18 +8,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.time.Year;
 
+import static com.yer.library.resource.Constants.MAX_PAGE_SIZE;
 import static com.yer.library.resource.ControllerUtil.getDataMap;
 import static java.time.LocalDateTime.now;
-import static org.springframework.http.HttpStatus.CREATED;
-import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.HttpStatus.*;
 
 @RestController
 @RequestMapping(path = "api/v1/books")
 @RequiredArgsConstructor
 public class BookController {
-    private static final int MAX_PAGE_SIZE = 50;
+
     private final BookService bookService;
 
     @GetMapping(path = "{bookId}")
@@ -48,19 +47,6 @@ public class BookController {
         );
     }
 
-    @GetMapping(path="listAvailable")
-    public ResponseEntity<Response> getAvailableBooks() {
-        return ResponseEntity.ok(
-                Response.builder()
-                        .timeStamp(now())
-                        .data(getDataMap("books", bookService.listAvailable(MAX_PAGE_SIZE)))
-                        .message("Books retrieved")
-                        .status(OK)
-                        .statusCode(OK.value())
-                        .build()
-        );
-    }
-
     @PostMapping
     public ResponseEntity<Response> addBook(@RequestBody @Valid Book book) {
         return ResponseEntity.ok(
@@ -77,16 +63,12 @@ public class BookController {
     @PutMapping(path = "{bookId}")
     public ResponseEntity<Response> updateBook(
             @PathVariable("bookId") Long bookId,
-            @RequestParam(required = false) String isbn,
-            @RequestParam(required = false) String title,
-            @RequestParam(required = false) Year year,
-            @RequestParam(required = false) String author,
-            @RequestParam(required = false) Integer value
+            @RequestBody @Valid Book book
     ) {
         return ResponseEntity.ok(
                 Response.builder()
                         .timeStamp(now())
-                        .data(getDataMap("book", bookService.update(bookId, isbn, title, year, author, value)))
+                        .data(getDataMap("book", bookService.fullUpdate(bookId, book)))
                         .message("Book " + bookId + " updated")
                         .status(OK)
                         .statusCode(OK.value())
@@ -99,10 +81,10 @@ public class BookController {
         return ResponseEntity.ok(
                 Response.builder()
                         .timeStamp(now())
-                        .data(getDataMap("delete", bookService.delete(bookId)))
+                        .data(getDataMap("soft deleted", bookService.delete(bookId)))
                         .message("Book " + bookId + " deleted")
-                        .status(OK)
-                        .statusCode(OK.value())
+                        .status(NO_CONTENT)
+                        .statusCode(NO_CONTENT.value())
                         .build()
         );
     }

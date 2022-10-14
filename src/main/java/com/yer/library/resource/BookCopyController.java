@@ -9,13 +9,13 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
+import static com.yer.library.resource.Constants.MAX_PAGE_SIZE;
 import static com.yer.library.resource.ControllerUtil.getDataMap;
 import static java.time.LocalDateTime.now;
-import static org.springframework.http.HttpStatus.CREATED;
-import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.HttpStatus.*;
 
 @RestController
-@RequestMapping(path = "api/v1/bookcopies")
+@RequestMapping(path = "api/v1/book_copies")
 @RequiredArgsConstructor
 public class BookCopyController {
     private final BookCopyService bookCopyService;
@@ -33,12 +33,25 @@ public class BookCopyController {
         );
     }
 
-    @GetMapping(path = "/listByBook/{bookId}")
+    @GetMapping
+    public ResponseEntity<Response> getBookCopies() {
+        return ResponseEntity.ok(
+                Response.builder()
+                        .timeStamp(now())
+                        .data(getDataMap("book", bookCopyService.list(MAX_PAGE_SIZE)))
+                        .message("Book copies retrieved")
+                        .status(OK)
+                        .statusCode(OK.value())
+                        .build()
+        );
+    }
+
+    @GetMapping(path = "/list_by_book/{bookId}")
     public ResponseEntity<Response> getBookCopies(@PathVariable("bookId") Long bookId) {
         return ResponseEntity.ok(
                 Response.builder()
                         .timeStamp(now())
-                        .data(getDataMap("book", bookCopyService.listByBook(bookId)))
+                        .data(getDataMap("book_copy", bookCopyService.listByBook(bookId, MAX_PAGE_SIZE)))
                         .message("Book copies for book with ID " + bookId + " retrieved")
                         .status(OK)
                         .statusCode(OK.value())
@@ -51,7 +64,7 @@ public class BookCopyController {
         return ResponseEntity.ok(
                 Response.builder()
                         .timeStamp(now())
-                        .data(getDataMap("book_copy", bookCopyService.add(bookId, bookCopy)))
+                        .data(getDataMap("book_copy", bookCopyService.add(bookCopy, bookId)))
                         .message("Book copy created")
                         .status(CREATED)
                         .statusCode(CREATED.value())
@@ -62,14 +75,12 @@ public class BookCopyController {
     @PutMapping(path = "{bookCopyId}")
     public ResponseEntity<Response> updateBookCopy(
             @PathVariable("bookCopyId") Long bookCopyId,
-            @RequestParam(required = false) Short locFloor,
-            @RequestParam(required = false) Short locBookcase,
-            @RequestParam(required = false) Short locShelve
+            @RequestBody @Valid BookCopy bookCopy
     ) {
         return ResponseEntity.ok(
                 Response.builder()
                         .timeStamp(now())
-                        .data(getDataMap("book_copy", bookCopyService.update(bookCopyId, locFloor, locBookcase, locShelve)))
+                        .data(getDataMap("book_copy", bookCopyService.fullUpdate(bookCopyId, bookCopy)))
                         .message("Book copy " + bookCopyId + " updated")
                         .status(OK)
                         .statusCode(OK.value())
@@ -84,8 +95,8 @@ public class BookCopyController {
                         .timeStamp(now())
                         .data(getDataMap("delete", bookCopyService.delete(bookCopyId)))
                         .message("Book copy " + bookCopyId + " deleted")
-                        .status(OK)
-                        .statusCode(OK.value())
+                        .status(NO_CONTENT)
+                        .statusCode(NO_CONTENT.value())
                         .build()
         );
     }
