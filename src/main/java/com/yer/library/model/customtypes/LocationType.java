@@ -61,7 +61,7 @@ public class LocationType implements UserType {
     }
 
     private static Location nullSafeToLocation(Object value) {
-        if (value != null){
+        if (value != null) {
             Location location = (Location) value;
             return new Location(location.getFloor(), location.getBookcase(), location.getShelve());
         }

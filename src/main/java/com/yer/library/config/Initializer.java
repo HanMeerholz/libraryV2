@@ -2,9 +2,11 @@ package com.yer.library.config;
 
 import com.yer.library.model.Book;
 import com.yer.library.model.BookCopy;
+import com.yer.library.model.Customer;
 import com.yer.library.model.Location;
 import com.yer.library.repository.BookCopyRepository;
 import com.yer.library.repository.BookRepository;
+import com.yer.library.repository.CustomerRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,6 +14,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+import java.time.LocalDate;
 import java.time.Year;
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,7 +23,7 @@ import java.util.Collections;
 public class Initializer {
 
     @Bean
-    CommandLineRunner commandLineRunner(BookRepository bookRepository, BookCopyRepository bookCopyRepository) {
+    CommandLineRunner commandLineRunner(BookRepository bookRepository, BookCopyRepository bookCopyRepository, CustomerRepository customerRepository) {
         return args -> {
             Book book1 = new Book(
                     "978-0123456789",
@@ -53,6 +56,33 @@ public class Initializer {
                     book1, new Location((short) 2, (short) 1, (short) 1));
 
             bookCopyRepository.saveAll(Collections.unmodifiableList(Arrays.asList(bookCopy1, bookCopy2, bookCopy3, bookCopy4)));
+
+            Customer customer1 = new Customer(
+                    "Amelia Bedelia",
+                    "Sesame Street 123",
+                    "amelia@bedelia.hotmail.com",
+                    LocalDate.of(1990, 3, 4)
+            );
+            Customer customer2 = new Customer(
+                    "John Doe",
+                    "54th Street 203",
+                    "johndoe@mail.com",
+                    LocalDate.of(1970, 1, 1)
+            );
+            Customer customer3 = new Customer(
+                    "Gerald",
+                    "Roadsquare 16",
+                    "notjohndoe@mail.com",
+                    LocalDate.of(2002, 4, 11)
+            );
+            Customer customer4 = new Customer(
+                    "Imposter",
+                    null,
+                    "anon@ymo.us",
+                    LocalDate.of(2004, 11, 30)
+            );
+
+            customerRepository.saveAll(Collections.unmodifiableList(Arrays.asList(customer1, customer2, customer3, customer4)));
         };
 
     }
