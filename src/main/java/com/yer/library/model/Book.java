@@ -44,7 +44,7 @@ public class Book {
     @Column(
             name = "isbn",
             nullable = false,
-            columnDefinition = "VARCHAR(15)"
+            columnDefinition = "VARCHAR(17)"
     )
     @NotEmpty(message = "ISBN cannot be empty or null")
     private String isbn;
@@ -58,9 +58,9 @@ public class Book {
     private String title;
 
     @Column(
-            name = "year",
+            name = "year_published",
             nullable = false,
-            columnDefinition = "YEAR"
+            columnDefinition = "SMALLINT"
     )
     @Convert(
             converter = YearAttributeConverter.class
@@ -87,7 +87,7 @@ public class Book {
     private String genre;
 
     @Column(
-            name = "value"
+            name = "book_value"
     )
     private Integer value;
 
