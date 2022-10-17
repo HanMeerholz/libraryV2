@@ -40,20 +40,6 @@ public class Customer {
     )
     private Long id;
 
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        Customer customer = (Customer) o;
-        return id != null && Objects.equals(id, customer.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
-
     @Column(
             name = "name",
             nullable = false,
@@ -91,5 +77,19 @@ public class Customer {
         this.homeAddress = homeAddress;
         this.emailAddress = emailAddress;
         this.birthday = birthday;
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        Customer customer = (Customer) o;
+        return id != null && Objects.equals(id, customer.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

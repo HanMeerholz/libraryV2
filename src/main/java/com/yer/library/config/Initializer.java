@@ -25,6 +25,55 @@ public class Initializer {
     @Bean
     CommandLineRunner commandLineRunner(BookRepository bookRepository, BookCopyRepository bookCopyRepository, CustomerRepository customerRepository) {
         return args -> {
+//            Book book = new Book(
+//                    "978-2-3915-3957-4",
+//                    "The Girl in the Veil",
+//                    Year.of(1948),
+//                    "Cole Lyons",
+//                    "fiction",
+//                    "horror",
+//                    4200
+//            );
+//        Book book2 = new Book(
+//                "978-0-1011-1658-9",
+//                "Legacy Circling",
+//                Year.of(2001),
+//                "Arla Salgado",
+//                "fiction",
+//                "romantic drama",
+//                4200
+//        );
+//
+//        Book book3 = new Book(
+//                "978-0-6967-9461-2",
+//                "Case of the Laughing Baboon",
+//                Year.of(1945),
+//                "Murat McCartney",
+//                "fiction",
+//                "fairy tale",
+//                4200
+//        );
+//
+//        Book book4 = new Book(
+//                "978-6-3073-8763-1",
+//                "The Serpent in the Stars",
+//                Year.of(1995),
+//                "Tyra Daniels",
+//                "nonfiction",
+//                "psychology",
+//                4200
+//        );
+//
+//        Book book5 = new Book(
+//                "978-2-4584-9673-4",
+//                "Crown of Truth",
+//                Year.of(1909),
+//                "Coral Truong",
+//                "fiction",
+//                "historical",
+//                4200
+//        );
+
             Book book1 = new Book(
                     "978-0123456789",
                     "Test",
