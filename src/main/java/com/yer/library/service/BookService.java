@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.util.Collection;
 
-import static org.springframework.data.domain.PageRequest.of;
+import static org.springframework.data.domain.PageRequest.ofSize;
 
 @Service
 @RequiredArgsConstructor
@@ -37,7 +37,7 @@ public class BookService implements CrudService<Book> {
     @Override
     public Collection<Book> list(int limit) {
         log.info("Listing all books");
-        return bookRepository.listAvailable(of(0, limit));
+        return bookRepository.listAvailable(ofSize(limit));
     }
 
     @Override
@@ -47,7 +47,7 @@ public class BookService implements CrudService<Book> {
             if (existingBook.getDeleted()) {
                 book.setId(existingBook.getId());
             } else {
-                throw new IllegalStateException("ISBN already exists.");
+                throw new IllegalStateException("ISBN " + book.getIsbn() + " already exists");
             }
         });
         return bookRepository.save(book);
@@ -106,25 +106,26 @@ public class BookService implements CrudService<Book> {
 //
 //        return book;
 //    }
-    public Book fullUpdate(Long bookId, Book book) {
+    public Book fullUpdate(Long bookId, Book updatedBook) {
         log.info("Updating book with id: {}", bookId);
-        Book updateBook = bookRepository.findById(bookId).orElseThrow(
+        Book existingBook = bookRepository.findById(bookId).orElseThrow(
                 () -> new IllegalStateException(
                         "book with id " + bookId + " does not exist"
                 )
         );
 
-        if (!book.getIsbn().equals(updateBook.getIsbn()) &&
-                !bookRepository.findByIsbn(updateBook.getIsbn()).orElseThrow(
-                        () -> new IllegalStateException("ISBN already exists.")
-                ).getDeleted()) {
-            throw new IllegalStateException("ISBN already exists.");
+        if (!updatedBook.getIsbn().equals(existingBook.getIsbn())) {
+            bookRepository.findByIsbn(updatedBook.getIsbn()).ifPresent(bookWithSameIsbn -> {
+                if (!bookWithSameIsbn.getDeleted()) {
+                    throw new IllegalStateException("ISBN " + bookWithSameIsbn.getIsbn() + " already exists");
+                }
+            });
         }
 
-        book.setId(bookId);
-        bookRepository.save(book);
+        updatedBook.setId(bookId);
+        bookRepository.save(updatedBook);
 
-        return book;
+        return updatedBook;
     }
 
     @Override
