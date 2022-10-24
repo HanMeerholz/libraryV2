@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.util.Collection;
 
-import static java.lang.Boolean.*;
+import static java.lang.Boolean.TRUE;
 import static org.springframework.data.domain.PageRequest.of;
 
 @Service
@@ -28,7 +28,7 @@ public class CustomerService implements CrudService<Customer> {
                 )
         );
         if (customer.getDeleted()) {
-            throw new IllegalStateException("customer with id " + customer + " does not exist");
+            throw new IllegalStateException("customer with id " + customer.getId() + " does not exist");
         }
         return customer;
     }
@@ -46,32 +46,33 @@ public class CustomerService implements CrudService<Customer> {
             if (existingCustomer.getDeleted()) {
                 customer.setId(existingCustomer.getId());
             } else {
-                throw new IllegalStateException("email already exists.");
+                throw new IllegalStateException("email " + customer.getEmailAddress() + " already exists.");
             }
         });
         return customerRepository.save(customer);
     }
 
     @Override
-    public Customer fullUpdate(Long customerId, Customer customer) {
+    public Customer fullUpdate(Long customerId, Customer updatedCustomer) {
         log.info("Updating customer with id: {}", customerId);
-        Customer updateCustomer = customerRepository.findById(customerId).orElseThrow(
+        Customer existingCustomer = customerRepository.findById(customerId).orElseThrow(
                 () -> new IllegalStateException(
                         "customer with id " + customerId + " does not exist"
                 )
         );
 
-        if (!customer.getEmailAddress().equals(updateCustomer.getEmailAddress()) &&
-                !customerRepository.findByEmail(updateCustomer.getEmailAddress()).orElseThrow(
-                        () -> new IllegalStateException("email already exists.")
-                ).getDeleted()) {
-            throw new IllegalStateException("email already exists.");
+        if (!updatedCustomer.getEmailAddress().equals(existingCustomer.getEmailAddress())) {
+            customerRepository.findByEmail(updatedCustomer.getEmailAddress()).ifPresent(customerWithSameEmail -> {
+                if (!customerWithSameEmail.getDeleted()) {
+                    throw new IllegalStateException("email " + customerWithSameEmail.getEmailAddress() + " already exists");
+                }
+            });
         }
 
-        customer.setId(customerId);
-        customerRepository.save(customer);
+        updatedCustomer.setId(customerId);
+        customerRepository.save(updatedCustomer);
 
-        return customer;
+        return updatedCustomer;
     }
 
     @Override

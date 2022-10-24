@@ -338,6 +338,7 @@ class BookServiceTest {
         );
         existingBook1.setId(book1Id);
 
+        Long book2Id = 2L;
         String newIsbn = "978-2-3915-3957-5";
         Book existingBook2 = new Book(
                 newIsbn,
@@ -348,7 +349,7 @@ class BookServiceTest {
                 "romantic drama",
                 4200
         );
-        existingBook2.setId(1L);
+        existingBook2.setId(book2Id);
 
         Book updatedBook = new Book(
                 newIsbn,
