@@ -74,13 +74,14 @@ public class BookCopyController {
 
     @PutMapping(path = "{bookCopyId}")
     public ResponseEntity<Response> updateBookCopy(
+            @RequestParam Long bookId,
             @PathVariable("bookCopyId") Long bookCopyId,
             @RequestBody @Valid BookCopy bookCopy
     ) {
         return ResponseEntity.ok(
                 Response.builder()
                         .timeStamp(now())
-                        .data(getDataMap("book_copy", bookCopyService.fullUpdate(bookCopyId, bookCopy)))
+                        .data(getDataMap("book_copy", bookCopyService.fullUpdate(bookCopyId, bookCopy, bookId)))
                         .message("Book copy " + bookCopyId + " updated")
                         .status(OK)
                         .statusCode(OK.value())

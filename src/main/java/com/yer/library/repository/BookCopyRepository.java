@@ -10,9 +10,9 @@ import java.util.List;
 
 @Repository
 public interface BookCopyRepository extends JpaRepository<BookCopy, Long> {
-    @Query("SELECT b FROM BookCopy b WHERE b.deleted = false")
+    @Query("SELECT b FROM BookCopy b WHERE b.deleted = false AND b.book.deleted = false")
     List<BookCopy> listAvailable(Pageable pageable);
 
-    @Query("SELECT b FROM BookCopy b WHERE b.book.id = ?1 AND b.deleted = false")
+    @Query("SELECT b FROM BookCopy b WHERE b.book.id = ?1 AND b.book.deleted = false AND b.deleted = false")
     List<BookCopy> listByBook(Long bookId, Pageable pageable);
 }

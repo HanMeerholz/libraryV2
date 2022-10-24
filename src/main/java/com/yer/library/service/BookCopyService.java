@@ -12,7 +12,7 @@ import javax.transaction.Transactional;
 import java.util.Collection;
 
 import static java.lang.Boolean.TRUE;
-import static org.springframework.data.domain.PageRequest.of;
+import static org.springframework.data.domain.PageRequest.ofSize;
 
 @Service
 @Transactional
@@ -26,11 +26,14 @@ public class BookCopyService implements CrudService<BookCopy> {
         log.info("Fetching book copy with id: {}", bookCopyId);
         BookCopy bookCopy = bookCopyRepository.findById(bookCopyId).orElseThrow(
                 () -> new IllegalStateException(
-                        "book with id " + bookCopyId + " does not exist"
+                        "book copy with id " + bookCopyId + " does not exist"
                 )
         );
         if (bookCopy.getDeleted()) {
-            throw new IllegalStateException("book with id " + bookCopyId + " does not exist");
+            throw new IllegalStateException("book copy with id " + bookCopyId + " does not exist");
+        }
+        if (bookCopy.getBook().getDeleted()) {
+            throw new IllegalStateException("book for book copy with id " + bookCopyId + " has been deleted");
         }
         return bookCopy;
     }
@@ -38,12 +41,12 @@ public class BookCopyService implements CrudService<BookCopy> {
     @Override
     public Collection<BookCopy> list(int limit) {
         log.info("Listing all book copies");
-        return bookCopyRepository.listAvailable(of(0, limit));
+        return bookCopyRepository.listAvailable(ofSize(limit));
     }
 
     public Collection<BookCopy> listByBook(Long bookId, int limit) {
         log.info("Listing all book copies for book with ID {}", bookId);
-        return bookCopyRepository.listByBook(bookId, of(0, limit));
+        return bookCopyRepository.listByBook(bookId, ofSize(limit));
     }
 
     @Override
@@ -55,12 +58,15 @@ public class BookCopyService implements CrudService<BookCopy> {
     public BookCopy add(BookCopy bookCopy, Long bookId) {
         log.info("Adding new book copy");
         if (bookId == null) {
-            throw new IllegalArgumentException("Cannot add book copy without specifying a book ID");
+            throw new IllegalArgumentException("cannot add book copy without specifying a book ID");
         }
 
         Book book = bookRepository.findById(bookId).orElseThrow(
-                () -> new IllegalStateException("book copy with id " + bookId + " does not exist")
+                () -> new IllegalStateException("cannot add book copy for book: book with ID " + bookId + " does not exist")
         );
+        if (book.getDeleted()) {
+            throw new IllegalStateException("cannot add book copy for book: book with ID " + bookId + " has been deleted");
+        }
 
         bookCopy.setBook(book);
 
@@ -68,19 +74,28 @@ public class BookCopyService implements CrudService<BookCopy> {
     }
 
     @Override
-    public BookCopy fullUpdate(Long bookCopyId, BookCopy bookCopy) {
-        log.info("Updating book copy with id: {}", bookCopyId);
-        BookCopy updateBookCopy = bookCopyRepository.findById(bookCopyId).orElseThrow(
-                () -> new IllegalStateException(
-                        "book copy with id " + bookCopyId + " does not exist"
-                )
+    public BookCopy fullUpdate(Long bookCopyId, BookCopy updateBookCopy) {
+        if (!bookCopyRepository.existsById(bookCopyId)) {
+            throw new IllegalStateException(
+                    "book copy with id " + bookCopyId + " does not exist"
+            );
+        }
+        updateBookCopy.setId(bookCopyId);
+
+        return bookCopyRepository.save(updateBookCopy);
+    }
+
+    public BookCopy fullUpdate(Long bookCopyId, BookCopy updateBookCopy, Long bookId) {
+        Book book = bookRepository.findById(bookId).orElseThrow(
+                () -> new IllegalStateException("cannot update book copy for book: book with ID " + bookId + " does not exist")
         );
+        if (book.getDeleted()) {
+            throw new IllegalStateException("cannot update book copy for book: book with ID " + bookId + " has been deleted");
+        }
 
-        bookCopy.setId(bookCopyId);
-        bookCopy.setBook(updateBookCopy.getBook());
-        bookCopyRepository.save(bookCopy);
+        updateBookCopy.setBook(book);
 
-        return bookCopy;
+        return fullUpdate(bookCopyId, updateBookCopy);
     }
 
     @Override
@@ -103,26 +118,8 @@ public class BookCopyService implements CrudService<BookCopy> {
         return TRUE;
     }
 
-
-//
-
-//
-//    public BookCopy add(Long bookId, BookCopy bookCopy) {
-//        log.info("Adding new book copy");
-//        if (bookId == null) {
-//            throw new IllegalArgumentException("Cannot add book copy without specifying a book ID");
-//        }
-//
-//        Book book = bookRepository.findById(bookId).orElseThrow(
-//                () -> new IllegalStateException("book with id " + bookId + " does not exist")
-//        );
-//
-//        bookCopy.setBook(book);
-//        return bookCopyRepository.save(bookCopy);
-//    }
-//
 //    @Transactional
-//    public BookCopy update(Long bookCopyId, Short locFloor, Short locBookcase, Short locShelve) {
+//    public BookCopy partialUpdate(Long bookCopyId, Short locFloor, Short locBookcase, Short locShelve) {
 //        log.info("Updating book copy with id: {}", bookCopyId);
 //        BookCopy bookCopy = bookCopyRepository.findById(bookCopyId).orElseThrow(
 //                () -> new IllegalStateException(

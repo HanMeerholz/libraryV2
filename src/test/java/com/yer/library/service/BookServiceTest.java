@@ -16,6 +16,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -32,7 +33,7 @@ class BookServiceTest {
     @Test
     void getExistingNonDeletedBook() {
         // given
-        Long bookId = 0L;
+        Long bookId = 1L;
 
         Book book = new Book(
                 "978-2-3915-3957-4",
@@ -50,18 +51,16 @@ class BookServiceTest {
         Book returnedBook = underTest.get(bookId);
 
         // then
-        ArgumentCaptor<Long> idArgumentCaptor = ArgumentCaptor.forClass(Long.class);
-        verify(bookRepository).findById(idArgumentCaptor.capture());
-        Long capturedId = idArgumentCaptor.getValue();
-
-        assertThat(capturedId).isEqualTo(bookId);
+        verify(bookRepository).findById(
+                argThat(id -> id.equals(bookId))
+        );
         assertThat(returnedBook).isEqualTo(book);
     }
 
     @Test
     void getExistingDeletedBook() {
         // given
-        Long bookId = 0L;
+        Long bookId = 1L;
 
         Book book = new Book(
                 "978-2-3915-3957-4",
@@ -80,19 +79,16 @@ class BookServiceTest {
         assertThatThrownBy(() -> underTest.get(bookId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("book with id " + bookId + " does not exist");
+        verify(bookRepository).findById(
+                argThat(id -> id.equals(bookId))
+        );
         verify(bookRepository, never()).save(any());
-
-        ArgumentCaptor<Long> idArgumentCaptor = ArgumentCaptor.forClass(Long.class);
-        verify(bookRepository).findById(idArgumentCaptor.capture());
-        Long capturedId = idArgumentCaptor.getValue();
-
-        assertThat(capturedId).isEqualTo(bookId);
     }
 
     @Test
     void getNonExistingBook() {
         // given
-        Long bookId = 0L;
+        Long bookId = 1L;
 
         given(bookRepository.findById(bookId)).willReturn(Optional.empty());
 
@@ -101,25 +97,30 @@ class BookServiceTest {
         assertThatThrownBy(() -> underTest.get(bookId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("book with id " + bookId + " does not exist");
+        verify(bookRepository).findById(
+                argThat(id -> id.equals(bookId))
+        );
         verify(bookRepository, never()).save(any());
-
-        ArgumentCaptor<Long> idArgumentCaptor = ArgumentCaptor.forClass(Long.class);
-        verify(bookRepository).findById(idArgumentCaptor.capture());
-        Long capturedId = idArgumentCaptor.getValue();
-
-        assertThat(capturedId).isEqualTo(bookId);
     }
 
     @Test
     void list() {
-        underTest.list(100);
-        verify(bookRepository).listAvailable(Pageable.ofSize(100));
+        // given
+        int limit = 100;
+
+        // when
+        underTest.list(limit);
+
+        // then
+        verify(bookRepository).listAvailable(
+                argThat(pageable -> pageable.equals(Pageable.ofSize(limit)))
+        );
     }
 
     @Test
     void addValidBook() {
         // given
-        Long bookId = 0L;
+        Long bookId = 1L;
 
         Book book = new Book(
                 "978-2-3915-3957-4",
@@ -190,7 +191,7 @@ class BookServiceTest {
     @Test
     void addBookWithIsbnTakenByDeletedBook() {
         // given
-        Long deletedBookInDBId = 0L;
+        Long deletedBookInDBId = 1L;
         String isbn = "978-2-3915-3957-4";
         Book deletedBookInDB = new Book(
                 isbn,
@@ -243,7 +244,7 @@ class BookServiceTest {
     @Test
     void fullUpdateExistingBookSameIsbn() {
         // given
-        Long bookId = 0L;
+        Long bookId = 1L;
         String isbn = "978-2-3915-3957-4";
         Book initialBook = new Book(
                 isbn,
@@ -283,25 +284,22 @@ class BookServiceTest {
         Book returnedBook = underTest.fullUpdate(bookId, updatedBook);
 
         // then
+        verify(bookRepository).findById(
+                argThat(id -> id.equals(bookId))
+        );
+
         ArgumentCaptor<Book> bookArgumentCaptor = ArgumentCaptor.forClass(Book.class);
         verify(bookRepository).save(bookArgumentCaptor.capture());
         Book capturedBook = bookArgumentCaptor.getValue();
 
-        ArgumentCaptor<Long> idArgumentCaptor = ArgumentCaptor.forClass(Long.class);
-        verify(bookRepository).findById(idArgumentCaptor.capture());
-        Long capturedId = idArgumentCaptor.getValue();
-
-        assertThat(capturedId).isEqualTo(bookId);
         assertThat(capturedBook).isEqualTo(updatedBook);
-        assertThat(returnedBook.getId()).isEqualTo(bookId);
-
         assertThat(returnedBook).isEqualTo(expectedReturnedBook);
     }
 
     @Test
     void fullUpdateNonExistingBook() {
         // given
-        Long bookId = 0L;
+        Long bookId = 1L;
         String isbn = "978-2-3915-3957-4";
         Book updatedBook = new Book(
                 isbn,
@@ -319,20 +317,16 @@ class BookServiceTest {
         assertThatThrownBy(() -> underTest.fullUpdate(bookId, updatedBook))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("book with id " + bookId + " does not exist");
-
+        verify(bookRepository).findById(
+                argThat(id -> id.equals(bookId))
+        );
         verify(bookRepository, never()).save(any());
-
-        ArgumentCaptor<Long> idArgumentCaptor = ArgumentCaptor.forClass(Long.class);
-        verify(bookRepository).findById(idArgumentCaptor.capture());
-        Long capturedId = idArgumentCaptor.getValue();
-
-        assertThat(capturedId).isEqualTo(bookId);
     }
 
     @Test
     void fullUpdateExistingBookNewIsbnExistsForNonDeletedBook() {
         // given
-        Long book1Id = 0L;
+        Long book1Id = 1L;
         Book existingBook1 = new Book(
                 "978-2-3915-3957-4",
                 "The Girl in the Veil",
@@ -373,19 +367,16 @@ class BookServiceTest {
         assertThatThrownBy(() -> underTest.fullUpdate(book1Id, updatedBook))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("ISBN " + newIsbn + " already exists");
+        verify(bookRepository).findById(
+                argThat(id -> id.equals(book1Id))
+        );
         verify(bookRepository, never()).save(any());
-
-        ArgumentCaptor<Long> idArgumentCaptor = ArgumentCaptor.forClass(Long.class);
-        verify(bookRepository).findById(idArgumentCaptor.capture());
-        Long capturedId = idArgumentCaptor.getValue();
-
-        assertThat(capturedId).isEqualTo(book1Id);
     }
 
     @Test
     void deleteExistingNonDeletedBook() {
         // given
-        Long bookId = 0L;
+        Long bookId = 1L;
         Book existingBook = new Book(
                 "978-2-3915-3957-4",
                 "The Girl in the Veil",
@@ -399,23 +390,20 @@ class BookServiceTest {
         given(bookRepository.findById(bookId)).willReturn(Optional.of(existingBook));
 
         // when
-        Boolean result = underTest.delete(0L);
+        Boolean result = underTest.delete(bookId);
 
         // then
-        ArgumentCaptor<Long> idArgumentCaptor = ArgumentCaptor.forClass(Long.class);
-        verify(bookRepository).findById(idArgumentCaptor.capture());
-        Long capturedId = idArgumentCaptor.getValue();
-
-        assertThat(capturedId).isEqualTo(bookId);
+        verify(bookRepository).findById(
+                argThat(id -> id.equals(bookId))
+        );
         assertThat(result).isTrue();
-
         assertThat(existingBook.getDeleted()).isTrue();
     }
 
     @Test
     void deleteExistingDeletedBook() {
         // given
-        Long bookId = 0L;
+        Long bookId = 1L;
         Book existingBook = new Book(
                 "978-2-3915-3957-4",
                 "The Girl in the Veil",
@@ -434,18 +422,15 @@ class BookServiceTest {
         assertThatThrownBy(() -> underTest.delete(bookId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("book with id " + bookId + " has already been deleted");
-
-        ArgumentCaptor<Long> idArgumentCaptor = ArgumentCaptor.forClass(Long.class);
-        verify(bookRepository).findById(idArgumentCaptor.capture());
-        Long capturedId = idArgumentCaptor.getValue();
-
-        assertThat(capturedId).isEqualTo(bookId);
+        verify(bookRepository).findById(
+                argThat(id -> id.equals(bookId))
+        );
     }
 
     @Test
     void deleteNonExistingBook() {
         // given
-        Long bookId = 0L;
+        Long bookId = 1L;
         given(bookRepository.findById(bookId)).willReturn(Optional.empty());
 
         // when
@@ -453,11 +438,8 @@ class BookServiceTest {
         assertThatThrownBy(() -> underTest.delete(bookId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("book with id " + bookId + " does not exist");
-
-        ArgumentCaptor<Long> idArgumentCaptor = ArgumentCaptor.forClass(Long.class);
-        verify(bookRepository).findById(idArgumentCaptor.capture());
-        Long capturedId = idArgumentCaptor.getValue();
-
-        assertThat(capturedId).isEqualTo(bookId);
+        verify(bookRepository).findById(
+                argThat(id -> id.equals(bookId))
+        );
     }
 }

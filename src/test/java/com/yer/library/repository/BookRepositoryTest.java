@@ -70,7 +70,7 @@ class BookRepositoryTest {
         List<Book> actual = underTest.listAvailable(ofSize(10));
 
         // then
-        assertThat(actual).hasSize(0);
+        assertThat(actual).isEmpty();
     }
 
     @Test
@@ -212,7 +212,12 @@ class BookRepositoryTest {
         List<Book> actual = underTest.listAvailable(ofSize(10));
 
         // then
-        assertThat(actual).hasSize(2).contains(book2).contains(book4);
+        assertThat(actual)
+                .hasSize(2)
+                .doesNotContain(book1)
+                .contains(book2)
+                .doesNotContain(book3)
+                .contains(book4);
     }
 
     @Test
