@@ -98,7 +98,7 @@ class BookCopyServiceTest {
         // when
         assertThatThrownBy(() -> underTest.get(bookCopyId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("book copy with id " + bookCopyId + " does not exist");
+                .hasMessageContaining("book copy with ID " + bookCopyId + " does not exist");
         verify(bookCopyRepository).findById(
                 argThat(id -> id.equals(bookCopyId))
         );
@@ -134,7 +134,7 @@ class BookCopyServiceTest {
         // then
         assertThatThrownBy(() -> underTest.get(bookCopyId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("book for book copy with id " + bookCopyId + " has been deleted");
+                .hasMessageContaining("book for book copy with ID " + bookCopyId + " has been deleted");
         verify(bookCopyRepository).findById(
                 argThat(id -> id.equals(bookCopyId))
         );
@@ -152,7 +152,7 @@ class BookCopyServiceTest {
         // then
         assertThatThrownBy(() -> underTest.get(bookCopyId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("book copy with id " + bookCopyId + " does not exist");
+                .hasMessageContaining("book copy with ID " + bookCopyId + " does not exist");
         verify(bookCopyRepository).findById(
                 argThat(id -> id.equals(bookCopyId))
         );
@@ -418,7 +418,7 @@ class BookCopyServiceTest {
         // then
         assertThatThrownBy(() -> underTest.fullUpdate(bookCopyId, updatedBookCopy))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("book copy with id " + bookCopyId + " does not exist");
+                .hasMessageContaining("book copy with ID " + bookCopyId + " does not exist");
         verify(bookCopyRepository).existsById(
                 argThat(id -> id.equals(bookCopyId))
         );
@@ -576,7 +576,7 @@ class BookCopyServiceTest {
     }
 
     @Test
-    void deleteExistingDeletedBook() {
+    void deleteExistingDeletedBookCopy() {
         // given
         Long bookId = 1L;
         Book book = new Book(
@@ -603,14 +603,14 @@ class BookCopyServiceTest {
         // then
         assertThatThrownBy(() -> underTest.delete(bookCopyId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("book copy with id " + bookId + " has already been deleted");
+                .hasMessageContaining("book copy with ID " + bookId + " has already been deleted");
         verify(bookCopyRepository).findById(
                 argThat(id -> id.equals(bookId))
         );
     }
 
     @Test
-    void deleteNonExistingBook() {
+    void deleteNonExistingBookCopy() {
         // given
         Long bookCopyId = 1L;
         given(bookCopyRepository.findById(bookCopyId)).willReturn(Optional.empty());
@@ -619,7 +619,7 @@ class BookCopyServiceTest {
         // then
         assertThatThrownBy(() -> underTest.delete(bookCopyId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("book copy with id " + bookCopyId + " does not exist");
+                .hasMessageContaining("book copy with ID " + bookCopyId + " does not exist");
         verify(bookCopyRepository).findById(
                 argThat(id -> id.equals(bookCopyId))
         );

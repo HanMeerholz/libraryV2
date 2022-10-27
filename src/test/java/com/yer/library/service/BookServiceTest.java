@@ -78,7 +78,7 @@ class BookServiceTest {
         // when
         assertThatThrownBy(() -> underTest.get(bookId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("book with id " + bookId + " does not exist");
+                .hasMessageContaining("book with ID " + bookId + " does not exist");
         verify(bookRepository).findById(
                 argThat(id -> id.equals(bookId))
         );
@@ -96,7 +96,7 @@ class BookServiceTest {
         // then
         assertThatThrownBy(() -> underTest.get(bookId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("book with id " + bookId + " does not exist");
+                .hasMessageContaining("book with ID " + bookId + " does not exist");
         verify(bookRepository).findById(
                 argThat(id -> id.equals(bookId))
         );
@@ -316,7 +316,7 @@ class BookServiceTest {
         // then
         assertThatThrownBy(() -> underTest.fullUpdate(bookId, updatedBook))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("book with id " + bookId + " does not exist");
+                .hasMessageContaining("book with ID " + bookId + " does not exist");
         verify(bookRepository).findById(
                 argThat(id -> id.equals(bookId))
         );
@@ -422,7 +422,7 @@ class BookServiceTest {
         // then
         assertThatThrownBy(() -> underTest.delete(bookId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("book with id " + bookId + " has already been deleted");
+                .hasMessageContaining("book with ID " + bookId + " has already been deleted");
         verify(bookRepository).findById(
                 argThat(id -> id.equals(bookId))
         );
@@ -438,7 +438,7 @@ class BookServiceTest {
         // then
         assertThatThrownBy(() -> underTest.delete(bookId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("book with id " + bookId + " does not exist");
+                .hasMessageContaining("book with ID " + bookId + " does not exist");
         verify(bookRepository).findById(
                 argThat(id -> id.equals(bookId))
         );

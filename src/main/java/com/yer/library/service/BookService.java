@@ -22,21 +22,21 @@ public class BookService implements CrudService<Book> {
 
     @Override
     public Book get(Long bookId) {
-        log.info("Fetching book with id: {}", bookId);
+        log.info("Fetching book with ID: {}", bookId);
         Book book = bookRepository.findById(bookId).orElseThrow(
                 () -> new IllegalStateException(
-                        "book with id " + bookId + " does not exist"
+                        "book with ID " + bookId + " does not exist"
                 )
         );
         if (book.getDeleted()) {
-            throw new IllegalStateException("book with id " + bookId + " does not exist");
+            throw new IllegalStateException("book with ID " + bookId + " does not exist");
         }
         return book;
     }
 
     @Override
     public Collection<Book> list(int limit) {
-        log.info("Listing all books");
+        log.info("Listing all books (up to a limit of {})", limit);
         return bookRepository.listAvailable(ofSize(limit));
     }
 
@@ -107,10 +107,10 @@ public class BookService implements CrudService<Book> {
 //        return book;
 //    }
     public Book fullUpdate(Long bookId, Book updatedBook) {
-        log.info("Updating book with id: {}", bookId);
+        log.info("Updating book with ID: {}", bookId);
         Book existingBook = bookRepository.findById(bookId).orElseThrow(
                 () -> new IllegalStateException(
-                        "book with id " + bookId + " does not exist"
+                        "book with ID " + bookId + " does not exist"
                 )
         );
 
@@ -130,17 +130,17 @@ public class BookService implements CrudService<Book> {
 
     @Override
     public Boolean delete(Long bookId) {
-        log.info("Deleting book with id: {}", bookId);
+        log.info("Deleting book with ID: {}", bookId);
 
         Book book = bookRepository.findById(bookId).orElseThrow(
                 () -> new IllegalStateException(
-                        "book with id " + bookId + " does not exist"
+                        "book with ID " + bookId + " does not exist"
                 )
         );
 
         if (book.getDeleted()) {
             throw new IllegalStateException(
-                    "book with id " + bookId + " has already been deleted"
+                    "book with ID " + bookId + " has already been deleted"
             );
         }
         book.setDeleted(true);

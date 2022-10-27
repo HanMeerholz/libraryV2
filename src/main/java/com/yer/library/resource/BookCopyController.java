@@ -25,7 +25,7 @@ public class BookCopyController {
         return ResponseEntity.ok(
                 Response.builder()
                         .timeStamp(now())
-                        .data(getDataMap("book", bookCopyService.get(bookCopyId)))
+                        .data(getDataMap("book_copy", bookCopyService.get(bookCopyId)))
                         .message("Book copy " + bookCopyId + " retrieved")
                         .status(OK)
                         .statusCode(OK.value())
@@ -38,7 +38,7 @@ public class BookCopyController {
         return ResponseEntity.ok(
                 Response.builder()
                         .timeStamp(now())
-                        .data(getDataMap("book", bookCopyService.list(MAX_PAGE_SIZE)))
+                        .data(getDataMap("book_copies", bookCopyService.list(MAX_PAGE_SIZE)))
                         .message("Book copies retrieved")
                         .status(OK)
                         .statusCode(OK.value())
@@ -101,6 +101,4 @@ public class BookCopyController {
                         .build()
         );
     }
-
-
 }

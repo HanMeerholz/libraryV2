@@ -263,7 +263,7 @@ class BookCopyRepositoryTest {
         // at least 3 book copies of the list "bookCopies" appear in actual
         assertThat(actual)
                 .hasSize(3)
-                .areAtLeast(3, new Condition<>(bookCopies::contains, "containsNBooksOf"));
+                .areAtLeast(3, new Condition<>(bookCopies::contains, "containsNBookCopiesOf"));
     }
 
     @Test
