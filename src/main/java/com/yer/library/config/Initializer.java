@@ -1,10 +1,7 @@
 package com.yer.library.config;
 
 import com.yer.library.model.*;
-import com.yer.library.repository.BookCopyRepository;
-import com.yer.library.repository.BookRepository;
-import com.yer.library.repository.MembershipRepository;
-import com.yer.library.repository.MembershipTypeRepository;
+import com.yer.library.repository.*;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,7 +23,8 @@ public class Initializer {
             BookRepository bookRepository,
             BookCopyRepository bookCopyRepository,
             MembershipTypeRepository membershipTypeRepository,
-            MembershipRepository membershipRepository) {
+            MembershipRepository membershipRepository,
+            MemberRepository memberRepository) {
         return args -> {
             Book book1 = new Book(
                     "978-2-3915-3957-4",
@@ -123,11 +121,11 @@ public class Initializer {
                     LocalDate.of(2020, Month.SEPTEMBER, 3),
                     LocalDate.of(2022, Month.SEPTEMBER, 3));
             Membership membership5 = new Membership(
-                    childMembershipType,
+                    adultMembershipType,
                     LocalDate.of(2020, Month.NOVEMBER, 3),
                     LocalDate.of(2021, Month.FEBRUARY, 3));
             Membership membership6 = new Membership(
-                    childMembershipType,
+                    adultMembershipType,
                     LocalDate.of(2021, Month.AUGUST, 12),
                     LocalDate.of(2022, Month.AUGUST, 12));
             Membership membership7 = new Membership(
@@ -146,60 +144,66 @@ public class Initializer {
             membershipRepository.saveAll(Collections.unmodifiableList(Arrays.asList(
                     membership1, membership2, membership3, membership4, membership5, membership6, membership7, membership8, membership9)));
 
-//            Member member1 = new Member(
-//                    "Kaden Dickens",
-//                    "835 Vincenza Loaf",
-//                    "k.dickens@gmail.com",
-//                    LocalDate.of(1953, Month.APRIL, 25)
-//            );
-//            Member member2 = new Member(
-//                    "Iain Carter",
-//                    "950 Poplar St.",
-//                    "iaincarter@hotmail.com",
-//                    LocalDate.of(1998, Month.JUNE, 8)
-//            );
-//            Member member3 = new Member(
-//                    "Harry Carter",
-//                    "950 Poplar St.",
-//                    "harrycarter@hotmail.com",
-//                    LocalDate.of(1996, Month.JULY, 4)
-//            );
-//            Member member4 = new Member(
-//                    "Kylo Finch",
-//                    null,
-//                    "kylo.finch@yahoo.com",
-//                    LocalDate.of(1943, Month.MAY, 7)
-//            );
-//            Member member5 = new Member(
-//                    "Henrietta Goodwin",
-//                    "651 Santa Clara Street",
-//                    "henrigoodwin@gmail.com",
-//                    LocalDate.of(1961, Month.MARCH, 13)
-//            );
-//            Member member6 = new Member(
-//                    "Roza Cunningham",
-//                    "618 East Ketch Harbour St.",
-//                    "rozach@outlook.com",
-//                    LocalDate.of(1974, Month.MAY, 1)
-//            );
-//            Member member7 = new Member(
-//                    "Berend Cunningham",
-//                    "618 East Ketch Harbour St.",
-//                    "b.cunningham@hotmail.co.uk",
-//                    LocalDate.of(1972, Month.JANUARY, 24)
-//            );
-//            Member member8 = new Member(
-//                    "Sabiha Rawlings",
-//                    "3615 Edsel Road",
-//                    "sabiharawlings@gmail.com",
-//                    LocalDate.of(2008, Month.DECEMBER, 5)
-//            );
-//
-//            customerRepository.saveAll(Collections.unmodifiableList(Arrays.asList(
-//                    member1, member2, member3, member4, member5, member6, member7, member8)));
+            Member member1 = new Member(
+                    "Kaden Dickens",
+                    "835 Vincenza Loaf",
+                    "k.dickens@gmail.com",
+                    LocalDate.of(1953, Month.APRIL, 25),
+                    membership3
+            );
+            Member member2 = new Member(
+                    "Iain Carter",
+                    "950 Poplar St.",
+                    "iaincarter@hotmail.com",
+                    LocalDate.of(1998, Month.JUNE, 8),
+                    membership1
+            );
+            Member member3 = new Member(
+                    "Harry Carter",
+                    "950 Poplar St.",
+                    "harrycarter@hotmail.com",
+                    LocalDate.of(1996, Month.JULY, 4),
+                    membership1
+            );
+            Member member4 = new Member(
+                    "Kylo Finch",
+                    null,
+                    "kylo.finch@yahoo.com",
+                    LocalDate.of(1943, Month.MAY, 7),
+                    membership4
+            );
+            Member member5 = new Member(
+                    "Henrietta Goodwin",
+                    "651 Santa Clara Street",
+                    "henrigoodwin@gmail.com",
+                    LocalDate.of(1961, Month.MARCH, 13),
+                    membership1
+            );
+            Member member6 = new Member(
+                    "Roza Cunningham",
+                    "618 East Ketch Harbour St.",
+                    "rozach@outlook.com",
+                    LocalDate.of(1974, Month.MAY, 1),
+                    membership7
+            );
+            Member member7 = new Member(
+                    "Berend Cunningham",
+                    "618 East Ketch Harbour St.",
+                    "b.cunningham@hotmail.co.uk",
+                    LocalDate.of(1972, Month.JANUARY, 24),
+                    membership7
+            );
+            Member member8 = new Member(
+                    "Sabiha Rawlings",
+                    "3615 Edsel Road",
+                    "sabiharawlings@gmail.com",
+                    LocalDate.of(2008, Month.DECEMBER, 5),
+                    membership2
+            );
+
+            memberRepository.saveAll(Collections.unmodifiableList(Arrays.asList(
+                    member1, member2, member3, member4, member5, member6, member7, member8)));
         };
-
-
     }
 
     @Bean

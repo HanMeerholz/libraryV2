@@ -8,9 +8,9 @@ import javax.validation.constraints.NotEmpty;
 import java.time.LocalDate;
 import java.util.Objects;
 
-@Entity(name = "Customer")
+@Entity(name = "Member")
 @Table(
-        name = "customers"
+        name = "members"
 //        uniqueConstraints = {                             // can't be unique because of soft delete
 //                @UniqueConstraint(
 //                        name = "email_address_unique",
@@ -23,16 +23,16 @@ import java.util.Objects;
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
-public class Customer {
+public class Member {
     @Id
     @SequenceGenerator(
-            name = "customer_sequence",
-            sequenceName = "customer_sequence",
+            name = "member_sequence",
+            sequenceName = "member_sequence",
             allocationSize = 1
     )
     @GeneratedValue(
             strategy = GenerationType.SEQUENCE,
-            generator = "customer_sequence"
+            generator = "member_sequence"
     )
     @Column(
             name = "id",
@@ -67,25 +67,32 @@ public class Customer {
     )
     private LocalDate birthday;
 
+    @ManyToOne
+    @JoinColumn(
+            name = "membership_id",
+            foreignKey = @ForeignKey(name = "FK_member_membership")
+    )
+    private Membership membership;
+
     @Column(
             name = "deleted"
     )
     private Boolean deleted = false;
 
-    public Customer(String name, String homeAddress, String emailAddress, LocalDate birthday) {
+    public Member(String name, String homeAddress, String emailAddress, LocalDate birthday, Membership membership) {
         this.name = name;
         this.homeAddress = homeAddress;
         this.emailAddress = emailAddress;
         this.birthday = birthday;
+        this.membership = membership;
     }
-
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        Customer customer = (Customer) o;
-        return id != null && Objects.equals(id, customer.id);
+        Member member = (Member) o;
+        return id != null && Objects.equals(id, member.id);
     }
 
     @Override
