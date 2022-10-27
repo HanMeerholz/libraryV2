@@ -35,6 +35,7 @@ public class BookCopy {
     @ManyToOne
     @JoinColumn(
             name = "book_id",
+            nullable = false,
             foreignKey = @ForeignKey(name = "FK_book_copies_books")
     )
     private Book book;

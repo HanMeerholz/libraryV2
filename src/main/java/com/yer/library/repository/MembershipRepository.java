@@ -12,5 +12,5 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
     List<Membership> listAvailable(Pageable pageable);
 
     @Query("SELECT m FROM Membership m WHERE m.membershipType.id = ?1 AND m.deleted = false")
-    List<Membership> listByMembershipType(Long membershipId, Pageable pageable);
+    List<Membership> listByMembershipType(Long membershipTypeId, Pageable pageable);
 }

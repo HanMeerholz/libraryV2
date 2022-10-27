@@ -42,9 +42,9 @@ public class MembershipService implements CrudService<Membership> {
         return membershipRepository.listAvailable(ofSize(limit));
     }
 
-    public Collection<Membership> listByMembershipType(Long membershipId, int limit) {
-        log.info("Listing all memberships for membership type with ID {} (up to a limit of {})", membershipId, limit);
-        return membershipRepository.listByMembershipType(membershipId, ofSize(limit));
+    public Collection<Membership> listByMembershipType(Long membershipTypeId, int limit) {
+        log.info("Listing all memberships for membership type with ID {} (up to a limit of {})", membershipTypeId, limit);
+        return membershipRepository.listByMembershipType(membershipTypeId, ofSize(limit));
     }
 
     @Override
@@ -53,15 +53,15 @@ public class MembershipService implements CrudService<Membership> {
     }
 
     // TODO might want to change the signature to Membership add(Membership Membership, String customerEmail, MembershipType membershipType)
-    public Membership add(Membership membership, Long membershipId) {
+    public Membership add(Membership membership, Long membershipTypeId) {
         log.info("Adding new membership");
 
-        if (membershipId == null) {
+        if (membershipTypeId == null) {
             throw new IllegalArgumentException("cannot add membership without specifying a membership type ID");
         }
 
-        MembershipType membershipType = membershipTypeRepository.findById(membershipId).orElseThrow(
-                () -> new IllegalStateException("cannot add membership for membership type: membership type with ID " + membershipId + " does not exist")
+        MembershipType membershipType = membershipTypeRepository.findById(membershipTypeId).orElseThrow(
+                () -> new IllegalStateException("cannot add membership for membership type: membership type with ID " + membershipTypeId + " does not exist")
         );
 
         membership.setMembershipType(membershipType);

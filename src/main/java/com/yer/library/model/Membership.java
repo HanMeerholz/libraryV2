@@ -32,6 +32,7 @@ public class Membership {
     @ManyToOne
     @JoinColumn(
             name = "membership_type_id",
+            nullable = false,
             foreignKey = @ForeignKey(name = "FK_memberships_membership_type")
     )
     private MembershipType membershipType;
