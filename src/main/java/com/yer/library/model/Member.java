@@ -1,5 +1,6 @@
 package com.yer.library.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.*;
 import org.hibernate.Hibernate;
 
@@ -72,6 +73,7 @@ public class Member {
             name = "membership_id",
             foreignKey = @ForeignKey(name = "FK_member_membership")
     )
+    @JsonManagedReference
     private Membership membership;
 
     @Column(

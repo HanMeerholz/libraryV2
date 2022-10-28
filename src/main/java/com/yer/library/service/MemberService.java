@@ -34,17 +34,20 @@ public class MemberService implements CrudService<Member> {
         if (member.getDeleted()) {
             throw new IllegalStateException("member with ID " + member.getId() + " does not exist");
         }
+
         return member;
     }
 
     @Override
     public Collection<Member> list(int limit) {
         log.info("Listing all members (up to a limit of {})", limit);
+
         return memberRepository.listAvailable(of(0, limit));
     }
 
     public Collection<Member> listByMembership(Long membershipId, int limit) {
         log.info("Listing all memberships for membership type with ID {} (up to a limit of {})", membershipId, limit);
+
         return memberRepository.listByMembership(membershipId, ofSize(limit));
     }
 
@@ -103,11 +106,11 @@ public class MemberService implements CrudService<Member> {
 
         if (membershipId == null) {
             member.setMembership(null);
-            return add(member);
+            return fullUpdate(memberId, member);
         }
 
         Membership membership = membershipRepository.findById(membershipId).orElseThrow(
-                () -> new IllegalStateException("cannot add member for membership: membership with ID " + membershipId + " does not exist")
+                () -> new IllegalStateException("cannot update member for membership: membership with ID " + membershipId + " does not exist")
         );
 
         member.setMembership(membership);
@@ -131,6 +134,7 @@ public class MemberService implements CrudService<Member> {
             );
         }
         member.setDeleted(true);
+        member.getMembership().getMembers().remove(member);
 
         return TRUE;
     }
