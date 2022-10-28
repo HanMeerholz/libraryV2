@@ -1,5 +1,6 @@
 package com.yer.library.service;
 
+import com.yer.library.model.Member;
 import com.yer.library.model.Membership;
 import com.yer.library.model.MembershipType;
 import com.yer.library.model.MembershipTypeName;
@@ -16,6 +17,8 @@ import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -137,7 +140,9 @@ class MembershipServiceTest {
         underTest.listByMembershipType(membershipTypeId, limit);
 
         // then
-        verify(membershipRepository).listByMembershipType(membershipTypeId, Pageable.ofSize(limit));
+        verify(membershipRepository).listByMembershipType(eq(membershipTypeId), argThat(
+                pageable -> pageable.equals(Pageable.ofSize(limit))
+        ));
     }
 
     @Test
@@ -236,7 +241,7 @@ class MembershipServiceTest {
         expectedReturnedMembership.setId(membershipId);
 
         willReturn(Optional.of(membershipType)).given(membershipTypeRepository).findById(membershipTypeId);
-        // We pass in an "any" argument since the specific bookCopy has a null id and
+        // We pass in an "any" argument since the specific membership has a null id and
         // will return false if .equals() is called on it
         willReturn(expectedReturnedMembership).given(underTest).add(any(Membership.class));
 
@@ -253,6 +258,7 @@ class MembershipServiceTest {
         assertThat(capturedMembership.getMembershipType()).isEqualTo(membershipWithType.getMembershipType());
         assertThat(capturedMembership.getStartDate()).isEqualTo(membershipWithType.getStartDate());
         assertThat(capturedMembership.getEndDate()).isEqualTo(membershipWithType.getEndDate());
+        assertThat(capturedMembership.getMembers()).isEqualTo(membershipWithType.getMembers());
         assertThat(capturedMembership.getDeleted()).isEqualTo(membershipWithType.getDeleted());
 
         assertThat(returnedMembership).isEqualTo(expectedReturnedMembership);
@@ -273,6 +279,11 @@ class MembershipServiceTest {
                 LocalDate.of(2019, Month.MARCH, 3),
                 LocalDate.of(2021, Month.MARCH, 3)
         );
+        Membership updatedMembershipCopyWithId = new Membership(
+                membershipType,
+                LocalDate.of(2019, Month.MARCH, 3),
+                LocalDate.of(2021, Month.MARCH, 3)
+        );
         Membership expectedReturnedMembership = new Membership(
                 membershipType,
                 LocalDate.of(2019, Month.MARCH, 3),
@@ -285,6 +296,7 @@ class MembershipServiceTest {
 
         // when
         Membership returnedMembership = underTest.fullUpdate(membershipId, updatedMembership);
+        updatedMembershipCopyWithId.setId(returnedMembership.getId());
 
         // then
         verify(membershipRepository).existsById(
@@ -294,7 +306,15 @@ class MembershipServiceTest {
         verify(membershipRepository).save(membershipArgumentCaptor.capture());
         Membership capturedMembership = membershipArgumentCaptor.getValue();
 
-        assertThat(capturedMembership).isEqualTo(updatedMembership);
+        assertThat(capturedMembership).isSameAs(updatedMembership);
+
+        assertThat(capturedMembership.getId()).isEqualTo(updatedMembershipCopyWithId.getId());
+        assertThat(capturedMembership.getMembershipType()).isEqualTo(updatedMembershipCopyWithId.getMembershipType());
+        assertThat(capturedMembership.getStartDate()).isEqualTo(updatedMembershipCopyWithId.getStartDate());
+        assertThat(capturedMembership.getEndDate()).isEqualTo(updatedMembershipCopyWithId.getEndDate());
+        assertThat(capturedMembership.getMembers()).isEqualTo(updatedMembershipCopyWithId.getMembers());
+        assertThat(capturedMembership.getDeleted()).isEqualTo(updatedMembershipCopyWithId.getDeleted());
+
         assertThat(returnedMembership).isEqualTo(expectedReturnedMembership);
     }
 
@@ -407,6 +427,7 @@ class MembershipServiceTest {
         assertThat(capturedMembership.getMembershipType()).isEqualTo(updatedMembershipWithType.getMembershipType());
         assertThat(capturedMembership.getStartDate()).isEqualTo(updatedMembershipWithType.getStartDate());
         assertThat(capturedMembership.getEndDate()).isEqualTo(updatedMembershipWithType.getEndDate());
+        assertThat(capturedMembership.getMembers()).isEqualTo(updatedMembershipWithType.getMembers());
         assertThat(capturedMembership.getDeleted()).isEqualTo(updatedMembershipWithType.getDeleted());
 
         assertThat(returnedMembership).isEqualTo(expectedReturnedMembership);
@@ -440,6 +461,51 @@ class MembershipServiceTest {
         );
         assertThat(result).isTrue();
         assertThat(existingMembership.getDeleted()).isTrue();
+    }
+
+    @Test
+    void deleteExistingNonDeletedMembershipWithMembers() {
+        // given
+        MembershipType membershipType = new MembershipType(
+                MembershipTypeName.FAMILY, 0
+        );
+
+        Long membershipId = 1L;
+        Membership existingMembership = new Membership(
+                membershipType,
+                LocalDate.of(2019, Month.MARCH, 3),
+                LocalDate.of(2021, Month.MARCH, 3)
+        );
+
+        Member member1 = new Member(
+                "Iain Carter",
+                "950 Poplar St.",
+                "iaincarter@hotmail.com",
+                LocalDate.of(1998, Month.JUNE, 8),
+                existingMembership
+        );
+        Member member2 = new Member(
+                "Harry Carter",
+                "950 Poplar St.",
+                "harrycarter@hotmail.com",
+                LocalDate.of(1996, Month.JULY, 4),
+                existingMembership
+        );
+
+        existingMembership.setMembers(Collections.unmodifiableList(Arrays.asList(member1, member2)));
+
+        given(membershipRepository.findById(membershipId)).willReturn(Optional.of(existingMembership));
+
+        // when
+        Boolean result = underTest.delete(membershipId);
+
+        // then
+        verify(membershipRepository).findById(
+                argThat(id -> id.equals(membershipId))
+        );
+        assertThat(result).isTrue();
+        assertThat(existingMembership.getDeleted()).isTrue();
+        assertThat(existingMembership.getMembers()).allMatch(member -> member.getMembership() == null);
     }
 
     @Test

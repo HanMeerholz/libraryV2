@@ -11,7 +11,7 @@ import java.util.Optional;
 
 @Repository
 public interface BookRepository extends JpaRepository<Book, Long> {
-    @Query("SELECT b FROM Book b WHERE b.isbn = ?1")
+    @Query("SELECT b FROM Book b WHERE b.isbn = ?1 AND b.deleted = false")
     Optional<Book> findByIsbn(String isbn);
 
     @Query("SELECT b FROM Book b WHERE b.deleted = false")

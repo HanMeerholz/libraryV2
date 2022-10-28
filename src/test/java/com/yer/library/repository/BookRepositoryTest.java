@@ -53,6 +53,30 @@ class BookRepositoryTest {
     }
 
     @Test
+    void findByIsbnForDeletedBook() {
+        // given
+        String isbn = "978-2-3915-3957-4";
+        Book book = new Book(
+                isbn,
+                "The Girl in the Veil",
+                Year.of(1948),
+                "Cole Lyons",
+                "fiction",
+                "horror",
+                4200
+        );
+        book.setDeleted(true);
+
+        underTest.save(book);
+
+        // when
+        Optional<Book> actual = underTest.findByIsbn(isbn);
+
+        // then
+        assertThat(actual.isPresent()).isFalse();
+    }
+
+    @Test
     void findByIsbnThatDoesNotExist() {
         // given
         String isbn = "978-2-3915-3957-4";
@@ -125,7 +149,7 @@ class BookRepositoryTest {
         List<Book> actual = underTest.listAvailable(ofSize(10));
 
         // then
-        assertThat(actual).hasSize(1).contains(book);
+        assertThat(actual).hasSize(1).containsOnly(book);
     }
 
     @Test
@@ -157,7 +181,7 @@ class BookRepositoryTest {
         List<Book> actual = underTest.listAvailable(ofSize(10));
 
         // then
-        assertThat(actual).hasSize(2).contains(book1).contains(book2);
+        assertThat(actual).hasSize(2).containsOnly(book1, book2);
     }
 
     @Test
@@ -214,10 +238,7 @@ class BookRepositoryTest {
         // then
         assertThat(actual)
                 .hasSize(2)
-                .doesNotContain(book1)
-                .contains(book2)
-                .doesNotContain(book3)
-                .contains(book4);
+                .containsOnly(book2, book4);
     }
 
     @Test

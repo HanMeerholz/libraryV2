@@ -183,7 +183,9 @@ class BookCopyServiceTest {
         underTest.listByBook(bookId, limit);
 
         // then
-        verify(bookCopyRepository).listByBook(bookId, Pageable.ofSize(limit));
+        verify(bookCopyRepository).listByBook(eq(bookId), argThat(
+                pageable -> pageable.equals(Pageable.ofSize(limit))
+        ));
     }
 
     @Test

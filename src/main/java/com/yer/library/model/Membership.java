@@ -1,15 +1,22 @@
 package com.yer.library.model;
 
-import lombok.*;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.Hibernate;
 
 import javax.persistence.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Objects;
 
 @Entity(name = "Membership")
 @Table(name = "memberships")
 @Getter
 @Setter
-@ToString
 @AllArgsConstructor
 @NoArgsConstructor
 public class Membership {
@@ -47,6 +54,10 @@ public class Membership {
     )
     private LocalDate endDate;
 
+    @OneToMany(mappedBy = "membership")
+    @JsonBackReference
+    private Collection<Member> members = new ArrayList<>();
+
     @Column(
             name = "deleted"
     )
@@ -56,5 +67,28 @@ public class Membership {
         this.membershipType = membershipType;
         this.startDate = startDate;
         this.endDate = endDate;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        Membership that = (Membership) o;
+        return id != null && Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "(" +
+                "id = " + id + ", " +
+                "membershipType = " + membershipType + ", " +
+                "startDate = " + startDate + ", " +
+                "endDate = " + endDate + ", " +
+                "deleted = " + deleted + ")";
     }
 }

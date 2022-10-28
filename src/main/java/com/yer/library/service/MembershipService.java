@@ -110,6 +110,8 @@ public class MembershipService implements CrudService<Membership> {
         }
         membership.setDeleted(true);
 
+        membership.getMembers().forEach(member -> member.setMembership(null));
+
         return TRUE;
     }
 }
