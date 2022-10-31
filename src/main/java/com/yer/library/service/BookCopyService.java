@@ -1,5 +1,11 @@
 package com.yer.library.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.github.fge.jsonpatch.JsonPatch;
+import com.github.fge.jsonpatch.JsonPatchException;
 import com.yer.library.model.Book;
 import com.yer.library.model.BookCopy;
 import com.yer.library.repository.BookCopyRepository;
@@ -21,6 +27,9 @@ import static org.springframework.data.domain.PageRequest.ofSize;
 public class BookCopyService implements CrudService<BookCopy> {
     private final BookCopyRepository bookCopyRepository;
     private final BookRepository bookRepository;
+    private final ObjectMapper mapper = JsonMapper.builder()
+            .findAndAddModules()
+            .build();
 
     public BookCopy get(Long bookCopyId) {
         log.info("Fetching book copy with ID: {}", bookCopyId);
@@ -98,6 +107,34 @@ public class BookCopyService implements CrudService<BookCopy> {
         updateBookCopy.setBook(book);
 
         return fullUpdate(bookCopyId, updateBookCopy);
+    }
+
+    @Transactional
+    public BookCopy partialUpdate(Long bookCopyId, JsonPatch jsonPatch) throws JsonPatchException, JsonProcessingException {
+        log.info("Updating book copy with ID: {}", bookCopyId);
+
+        BookCopy existingBookCopy = bookCopyRepository.findById(bookCopyId).orElseThrow(
+                () -> new IllegalStateException(
+                        "book copy with ID " + bookCopyId + " does not exist"
+                )
+        );
+
+        JsonNode existingBookCopyJson = mapper.convertValue(existingBookCopy, JsonNode.class);
+        JsonNode patched = jsonPatch.apply(existingBookCopyJson);
+
+        BookCopy updatedBookCopy = mapper.treeToValue(patched, BookCopy.class);
+
+
+        Long bookId = updatedBookCopy.getBook().getId();
+
+        Book book = bookRepository.findById(bookId).orElseThrow(
+                () -> new IllegalStateException("cannot update book copy for book: book with ID " + bookId + " does not exist")
+        );
+        if (book.getDeleted()) {
+            throw new IllegalStateException("cannot update book copy for book: book with ID " + bookId + " has been deleted");
+        }
+
+        return bookCopyRepository.save(updatedBookCopy);
     }
 
     @Override

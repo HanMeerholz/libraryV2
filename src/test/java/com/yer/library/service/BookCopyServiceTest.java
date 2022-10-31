@@ -1,5 +1,10 @@
 package com.yer.library.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.github.fge.jsonpatch.JsonPatch;
+import com.github.fge.jsonpatch.JsonPatchException;
 import com.yer.library.model.Book;
 import com.yer.library.model.BookCopy;
 import com.yer.library.model.Location;
@@ -14,6 +19,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
 
+import java.io.IOException;
 import java.time.Year;
 import java.util.Optional;
 
@@ -540,6 +546,207 @@ class BookCopyServiceTest {
         assertThat(capturedBookCopy.getDeleted()).isEqualTo(updatedBookCopyWithBook.getDeleted());
 
         assertThat(returnedBookCopy).isEqualTo(expectedReturnedBookCopy);
+    }
+
+    @Test
+    void partialUpdateValidBookCopy() throws IOException, JsonPatchException {
+        // given
+        Long bookId = 1L;
+        Book book = new Book(
+                "978-2-3915-3957-4",
+                "The Girl in the Veil",
+                Year.of(1948),
+                "Cole Lyons",
+                "fiction",
+                "horror",
+                4200
+        );
+        book.setId(bookId);
+
+        Long bookCopyId = 1L;
+        BookCopy existingBookCopy = new BookCopy(
+                book,
+                new Location((short) 1, (short) 1, (short) 1)
+        );
+        existingBookCopy.setId(bookCopyId);
+
+        Location updatedLocation = new Location((short) 2, (short) 2, (short) 2);
+
+        BookCopy updatedBookCopy = new BookCopy(
+                book,
+                updatedLocation
+        );
+        updatedBookCopy.setId(bookCopyId);
+
+        ObjectMapper mapper = JsonMapper.builder()
+                .findAndAddModules()
+                .build();
+        String jsonString = "[{" +
+                "\"op\": \"replace\"," +
+                "\"path\": \"/location\"," +
+                "\"value\":" + mapper.convertValue(updatedLocation, JsonNode.class) +
+                "}]";
+        JsonNode bookCopyJson = mapper.readTree(jsonString);
+        JsonPatch jsonPatch = JsonPatch.fromJson(bookCopyJson);
+
+        given(bookCopyRepository.findById(bookId)).willReturn(Optional.of(existingBookCopy));
+        given(bookCopyRepository.save(updatedBookCopy)).willReturn(updatedBookCopy);
+
+        // when
+        BookCopy returnedBookCopy = underTest.partialUpdate(bookCopyId, jsonPatch);
+
+        // then
+        verify(bookCopyRepository).findById(
+                argThat(id -> id.equals(bookCopyId))
+        );
+
+        ArgumentCaptor<BookCopy> bookCopyArgumentCaptor = ArgumentCaptor.forClass(BookCopy.class);
+        verify(bookCopyRepository).save(bookCopyArgumentCaptor.capture());
+        BookCopy capturedBookCopy = bookCopyArgumentCaptor.getValue();
+
+        assertThat(capturedBookCopy).isEqualTo(updatedBookCopy);
+        assertThat(returnedBookCopy).isEqualTo(updatedBookCopy);
+        assertThat(returnedBookCopy.getLocation()).isEqualTo(updatedLocation);
+    }
+
+
+    @Test
+    void partialUpdateNonExistingBookCopy() throws IOException {
+        // given
+        Long bookCopyId = 1L;
+
+        Location updatedLocation = new Location((short) 2, (short) 2, (short) 2);
+
+        ObjectMapper mapper = JsonMapper.builder()
+                .findAndAddModules()
+                .build();
+        String jsonString = "[{" +
+                "\"op\": \"replace\"," +
+                "\"path\": \"/location\"," +
+                "\"value\":" + mapper.convertValue(updatedLocation, JsonNode.class) +
+                "}]";
+        JsonNode bookCopyJson = mapper.readTree(jsonString);
+        JsonPatch jsonPatch = JsonPatch.fromJson(bookCopyJson);
+        given(bookCopyRepository.findById(bookCopyId)).willReturn(Optional.empty());
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.partialUpdate(bookCopyId, jsonPatch))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("book copy with ID " + bookCopyId + " does not exist");
+        verify(bookCopyRepository).findById(
+                argThat(id -> id.equals(bookCopyId))
+        );
+        verify(bookCopyRepository, never()).save(any());
+    }
+
+    @Test
+    void partialUpdateBookCopyBookForNonExistingBook() throws IOException {
+        // given
+        Long existingBookId = 1L;
+        Book existingBook = new Book(
+                "978-2-3915-3957-4",
+                "The Girl in the Veil",
+                Year.of(1948),
+                "Cole Lyons",
+                "fiction",
+                "horror",
+                4200
+        );
+        existingBook.setId(existingBookId);
+
+        Long bookCopyId = 1L;
+        BookCopy existingBookCopy = new BookCopy(
+                existingBook,
+                new Location((short) 1, (short) 1, (short) 1)
+        );
+        existingBookCopy.setId(bookCopyId);
+
+        Long updatedBookId = 2L;
+
+        ObjectMapper mapper = JsonMapper.builder()
+                .findAndAddModules()
+                .build();
+        String jsonString = "[{" +
+                "\"op\": \"replace\"," +
+                "\"path\": \"/book\"," +
+                "\"value\":" + "{\"id\": " + updatedBookId + "}" +
+                "}]";
+        JsonNode bookCopyJson = mapper.readTree(jsonString);
+        JsonPatch jsonPatch = JsonPatch.fromJson(bookCopyJson);
+
+        given(bookCopyRepository.findById(bookCopyId)).willReturn(Optional.of(existingBookCopy));
+        given(bookRepository.findById(updatedBookId)).willReturn(Optional.empty());
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.partialUpdate(bookCopyId, jsonPatch))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("cannot update book copy for book: book with ID " + updatedBookId + " does not exist");
+        verify(bookCopyRepository).findById(
+                argThat(id -> id.equals(bookCopyId))
+        );
+        verify(bookCopyRepository, never()).save(any());
+    }
+
+    @Test
+    void partialUpdateBookCopyBookForExistingDeletedBook() throws IOException {
+        // given
+        Long existingBookId = 1L;
+        Book existingBook = new Book(
+                "978-2-3915-3957-4",
+                "The Girl in the Veil",
+                Year.of(1948),
+                "Cole Lyons",
+                "fiction",
+                "horror",
+                4200
+        );
+        existingBook.setId(existingBookId);
+
+        Long existingBook2Id = 2L;
+        Book existingBook2 = new Book(
+                "978-2-3915-3957-5",
+                "Legacy Circling",
+                Year.of(2001),
+                "Arla Salgado",
+                "fiction",
+                "romantic drama",
+                4200
+        );
+        existingBook2.setId(existingBook2Id);
+        existingBook2.setDeleted(true);
+
+        Long bookCopyId = 1L;
+        BookCopy existingBookCopy = new BookCopy(
+                existingBook,
+                new Location((short) 1, (short) 1, (short) 1)
+        );
+        existingBookCopy.setId(bookCopyId);
+
+        ObjectMapper mapper = JsonMapper.builder()
+                .findAndAddModules()
+                .build();
+        String jsonString = "[{" +
+                "\"op\": \"replace\"," +
+                "\"path\": \"/book\"," +
+                "\"value\":" + "{\"id\": " + existingBook2Id + "}" +
+                "}]";
+        JsonNode bookCopyJson = mapper.readTree(jsonString);
+        JsonPatch jsonPatch = JsonPatch.fromJson(bookCopyJson);
+
+        given(bookCopyRepository.findById(bookCopyId)).willReturn(Optional.of(existingBookCopy));
+        given(bookRepository.findById(existingBook2Id)).willReturn(Optional.of(existingBook2));
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.partialUpdate(bookCopyId, jsonPatch))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("cannot update book copy for book: book with ID " + existingBook2Id + " has been deleted");
+        verify(bookCopyRepository).findById(
+                argThat(id -> id.equals(bookCopyId))
+        );
+        verify(bookCopyRepository, never()).save(any());
     }
 
 
