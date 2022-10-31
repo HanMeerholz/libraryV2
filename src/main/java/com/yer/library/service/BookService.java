@@ -63,6 +63,28 @@ public class BookService implements CrudService<Book> {
     }
 
 
+    public Book fullUpdate(Long bookId, Book updatedBook) {
+        log.info("Updating book with ID: {}", bookId);
+        Book existingBook = bookRepository.findById(bookId).orElseThrow(
+                () -> new IllegalStateException(
+                        "book with ID " + bookId + " does not exist"
+                )
+        );
+
+        if (!updatedBook.getIsbn().equals(existingBook.getIsbn())) {
+            bookRepository.findByIsbn(updatedBook.getIsbn()).ifPresent(bookWithSameIsbn -> {
+                if (!bookWithSameIsbn.getDeleted()) {
+                    throw new IllegalStateException("ISBN " + bookWithSameIsbn.getIsbn() + " already exists");
+                }
+            });
+        }
+
+        updatedBook.setId(bookId);
+        bookRepository.save(updatedBook);
+
+        return updatedBook;
+    }
+
     @Transactional
     public Book partialUpdate(Long bookId, JsonPatch jsonPatch) throws JsonPatchException, JsonProcessingException {
         log.info("Updating book with ID: {}", bookId);
@@ -87,28 +109,6 @@ public class BookService implements CrudService<Book> {
         }
 
         return bookRepository.save(updatedBook);
-    }
-
-    public Book fullUpdate(Long bookId, Book updatedBook) {
-        log.info("Updating book with ID: {}", bookId);
-        Book existingBook = bookRepository.findById(bookId).orElseThrow(
-                () -> new IllegalStateException(
-                        "book with ID " + bookId + " does not exist"
-                )
-        );
-
-        if (!updatedBook.getIsbn().equals(existingBook.getIsbn())) {
-            bookRepository.findByIsbn(updatedBook.getIsbn()).ifPresent(bookWithSameIsbn -> {
-                if (!bookWithSameIsbn.getDeleted()) {
-                    throw new IllegalStateException("ISBN " + bookWithSameIsbn.getIsbn() + " already exists");
-                }
-            });
-        }
-
-        updatedBook.setId(bookId);
-        bookRepository.save(updatedBook);
-
-        return updatedBook;
     }
 
     @Override
