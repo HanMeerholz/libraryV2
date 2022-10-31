@@ -1,6 +1,12 @@
 package com.yer.library.service;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.github.fge.jsonpatch.JsonPatch;
+import com.github.fge.jsonpatch.JsonPatchException;
 import com.yer.library.model.Book;
 import com.yer.library.repository.BookRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +25,9 @@ import static org.springframework.data.domain.PageRequest.ofSize;
 public class BookService implements CrudService<Book> {
 
     private final BookRepository bookRepository;
+    private final ObjectMapper mapper = JsonMapper.builder()
+            .findAndAddModules()
+            .build();
 
     @Override
     public Book get(Long bookId) {
@@ -54,58 +63,32 @@ public class BookService implements CrudService<Book> {
     }
 
 
-    //    @Transactional
-//    public Book update(Long bookId, Book book) {
-//        log.info("Updating book with id: {}", bookId);
-//        Book updateBook = bookRepository.findById(bookId).orElseThrow(
-//                () -> new IllegalStateException(
-//                        "book with id " + bookId + " does not exist"
-//                )
-//        );
-//
-//        String isbn = book.getIsbn();
-//        if (isbn != null &&
-//                isbn.length() > 0 &&
-//                !Objects.equals(book.getIsbn(), isbn)
-//        ) {
-//            if (bookRepository.findBookByIsbn(book.getIsbn()).isPresent()) {
-//                throw new IllegalStateException("ISBN already exists.");
-//            }
-//            book.setIsbn(isbn);
-//        }
-//
-//        String title = book.getTitle();
-//        if (title != null &&
-//                title.length() > 0 &&
-//                !Objects.equals(book.getIsbn(), title)
-//        ) {
-//            book.setTitle(title);
-//        }
-//
-//        Year year = book.getYear();
-//        if (year != null &&
-//                !Objects.equals(book.getYear(), year)
-//        ) {
-//            book.setYear(year);
-//        }
-//
-//        String author = book.getAuthor();
-//        if (author != null &&
-//                author.length() > 0 &&
-//                !Objects.equals(book.getAuthor(), author)
-//        ) {
-//            book.setAuthor(author);
-//        }
-//
-//        Integer value = book.getValue();
-//        if (value != null &&
-//                !Objects.equals(book.getValue(), value)
-//        ) {
-//            book.setValue(value);
-//        }
-//
-//        return book;
-//    }
+    @Transactional
+    public Book partialUpdate(Long bookId, JsonPatch jsonPatch) throws JsonPatchException, JsonProcessingException {
+        log.info("Updating book with ID: {}", bookId);
+
+        Book existingBook = bookRepository.findById(bookId).orElseThrow(
+                () -> new IllegalStateException(
+                        "book with ID " + bookId + " does not exist"
+                )
+        );
+
+        JsonNode existingBookJson = mapper.convertValue(existingBook, JsonNode.class);
+        JsonNode patched = jsonPatch.apply(existingBookJson);
+
+        Book updatedBook = mapper.treeToValue(patched, Book.class);
+
+        if (!updatedBook.getIsbn().equals(existingBook.getIsbn())) {
+            bookRepository.findByIsbn(updatedBook.getIsbn()).ifPresent(bookWithSameIsbn -> {
+                if (!bookWithSameIsbn.getDeleted()) {
+                    throw new IllegalStateException("ISBN " + bookWithSameIsbn.getIsbn() + " already exists.");
+                }
+            });
+        }
+
+        return bookRepository.save(updatedBook);
+    }
+
     public Book fullUpdate(Long bookId, Book updatedBook) {
         log.info("Updating book with ID: {}", bookId);
         Book existingBook = bookRepository.findById(bookId).orElseThrow(

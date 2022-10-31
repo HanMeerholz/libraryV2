@@ -1,5 +1,8 @@
 package com.yer.library.resource;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.github.fge.jsonpatch.JsonPatch;
+import com.github.fge.jsonpatch.JsonPatchException;
 import com.yer.library.model.Book;
 import com.yer.library.model.Response;
 import com.yer.library.service.BookService;
@@ -61,7 +64,7 @@ public class BookController {
     }
 
     @PutMapping(path = "{bookId}")
-    public ResponseEntity<Response> updateBook(
+    public ResponseEntity<Response> fullUpdateBook(
             @PathVariable("bookId") Long bookId,
             @RequestBody @Valid Book book
     ) {
@@ -69,6 +72,22 @@ public class BookController {
                 Response.builder()
                         .timeStamp(now())
                         .data(getDataMap("book", bookService.fullUpdate(bookId, book)))
+                        .message("Book " + bookId + " updated")
+                        .status(OK)
+                        .statusCode(OK.value())
+                        .build()
+        );
+    }
+
+    @PatchMapping(path = "{bookId}")
+    public ResponseEntity<Response> partiallyUpdateBook(
+            @PathVariable("bookId") Long bookId,
+            @RequestBody JsonPatch jsonPatch
+    ) throws JsonPatchException, JsonProcessingException {
+        return ResponseEntity.ok(
+                Response.builder()
+                        .timeStamp(now())
+                        .data(getDataMap("book", bookService.partialUpdate(bookId, jsonPatch)))
                         .message("Book " + bookId + " updated")
                         .status(OK)
                         .statusCode(OK.value())

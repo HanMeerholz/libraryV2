@@ -1,5 +1,10 @@
 package com.yer.library.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.github.fge.jsonpatch.JsonPatch;
+import com.github.fge.jsonpatch.JsonPatchException;
 import com.yer.library.model.Book;
 import com.yer.library.repository.BookRepository;
 import org.junit.jupiter.api.Test;
@@ -10,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
 
+import java.io.IOException;
 import java.time.Year;
 import java.util.Optional;
 
@@ -366,6 +372,148 @@ class BookServiceTest {
         // when
         // then
         assertThatThrownBy(() -> underTest.fullUpdate(book1Id, updatedBook))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("ISBN " + newIsbn + " already exists");
+        verify(bookRepository).findById(
+                argThat(id -> id.equals(book1Id))
+        );
+        verify(bookRepository, never()).save(any());
+    }
+
+    @Test
+    void partialUpdateExistingBookSameIsbn() throws IOException, JsonPatchException {
+        // given
+        Long bookId = 1L;
+        Book existingBook = new Book(
+                "978-2-3915-3957-4",
+                "The Girl in the Veil",
+                Year.of(1948),
+                "Cole Lyons",
+                "fiction",
+                "horror",
+                4200
+        );
+        existingBook.setId(bookId);
+
+        @SuppressWarnings("JsonStandardCompliance") String updatedTitle = "The Boy in the Veil";
+
+        Book updatedBook = new Book(
+                "978-2-3915-3957-4",
+                updatedTitle,
+                Year.of(1948),
+                "Cole Lyons",
+                "fiction",
+                "horror",
+                4200
+        );
+        updatedBook.setId(bookId);
+
+        String jsonString = "[{" +
+                "\"op\": \"replace\"," +
+                "\"path\": \"/title\"," +
+                "\"value\": \"" + updatedTitle + "\"" +
+                "}]";
+        ObjectMapper mapper = JsonMapper.builder()
+                .findAndAddModules()
+                .build();
+        JsonNode bookJson = mapper.readTree(jsonString);
+        JsonPatch jsonPatch = JsonPatch.fromJson(bookJson);
+
+        given(bookRepository.findById(bookId)).willReturn(Optional.of(existingBook));
+        given(bookRepository.save(updatedBook)).willReturn(updatedBook);
+
+        // when
+        Book returnedBook = underTest.partialUpdate(bookId, jsonPatch);
+
+        // then
+        verify(bookRepository).findById(
+                argThat(id -> id.equals(bookId))
+        );
+
+        ArgumentCaptor<Book> bookArgumentCaptor = ArgumentCaptor.forClass(Book.class);
+        verify(bookRepository).save(bookArgumentCaptor.capture());
+        Book capturedBook = bookArgumentCaptor.getValue();
+
+        assertThat(capturedBook).isEqualTo(updatedBook);
+        assertThat(returnedBook).isEqualTo(updatedBook);
+        assertThat(returnedBook.getTitle()).isEqualTo(updatedTitle);
+    }
+
+    @Test
+    void partialUpdateNonExistingBook() throws IOException {
+        // given
+        Long bookId = 1L;
+
+        @SuppressWarnings("JsonStandardCompliance") String updatedTitle = "The Boy in the Veil";
+
+        String jsonString = "[{" +
+                "\"op\": \"replace\"," +
+                "\"path\": \"/title\"," +
+                "\"value\": \"" + updatedTitle + "\"" +
+                "}]";
+        ObjectMapper mapper = JsonMapper.builder()
+                .findAndAddModules()
+                .build();
+        JsonNode bookJson = mapper.readTree(jsonString);
+        JsonPatch jsonPatch = JsonPatch.fromJson(bookJson);
+        given(bookRepository.findById(bookId)).willReturn(Optional.empty());
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.partialUpdate(bookId, jsonPatch))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("book with ID " + bookId + " does not exist");
+        verify(bookRepository).findById(
+                argThat(id -> id.equals(bookId))
+        );
+        verify(bookRepository, never()).save(any());
+    }
+
+    @Test
+    void partialUpdateExistingBookNewIsbnExistsForNonDeletedBook() throws IOException {
+        // given
+        Long book1Id = 1L;
+        Book existingBook1 = new Book(
+                "978-2-3915-3957-4",
+                "The Girl in the Veil",
+                Year.of(1948),
+                "Cole Lyons",
+                "fiction",
+                "horror",
+                4200
+        );
+        existingBook1.setId(book1Id);
+
+        Long book2Id = 2L;
+        @SuppressWarnings("JsonStandardCompliance") String newIsbn = "978-2-3915-3957-5";
+        Book existingBook2 = new Book(
+                newIsbn,
+                "Legacy Circling",
+                Year.of(2001),
+                "Arla Salgado",
+                "fiction",
+                "romantic drama",
+                4200
+        );
+        existingBook2.setId(book2Id);
+
+        String jsonString = "[{" +
+                "\"op\": \"replace\"," +
+                "\"path\": \"/isbn\"," +
+                "\"value\": \"" + newIsbn + "\"" +
+                "}]";
+        ObjectMapper mapper = JsonMapper.builder()
+                .findAndAddModules()
+                .build();
+        JsonNode bookJson = mapper.readTree(jsonString);
+        JsonPatch jsonPatch = JsonPatch.fromJson(bookJson);
+
+        given(bookRepository.findById(book1Id)).willReturn(Optional.of(existingBook1));
+        given(bookRepository.findByIsbn(newIsbn)).willReturn(Optional.of(existingBook2));
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.partialUpdate(book1Id, jsonPatch))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("ISBN " + newIsbn + " already exists");
         verify(bookRepository).findById(
