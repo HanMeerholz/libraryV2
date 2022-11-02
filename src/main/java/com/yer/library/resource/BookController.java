@@ -79,7 +79,7 @@ public class BookController {
         );
     }
 
-    @PatchMapping(path = "{bookId}")
+    @PatchMapping(path = "{bookId}", consumes = "application/json-patch+json")
     public ResponseEntity<Response> partiallyUpdateBook(
             @PathVariable("bookId") Long bookId,
             @RequestBody JsonPatch jsonPatch

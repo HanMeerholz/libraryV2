@@ -13,6 +13,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.Logger;
 import org.springframework.data.domain.Pageable;
 
 import java.io.IOException;
@@ -32,6 +33,9 @@ class BookServiceTest {
 
     @Mock
     private BookRepository bookRepository;
+
+    @Mock
+    private Logger logger;
 
     @InjectMocks
     private BookService underTest;
@@ -303,6 +307,63 @@ class BookServiceTest {
     }
 
     @Test
+    void fullUpdateExistingBookNewId() {
+        // given
+        Long bookId = 1L;
+        Book initialBook = new Book(
+                "978-2-3915-3957-4",
+                "The Girl in the Veil",
+                Year.of(1948),
+                "Cole Lyons",
+                "fiction",
+                "horror",
+                4200
+        );
+        initialBook.setId(bookId);
+
+        Long newBookId = 2L;
+        Book updatedBook = new Book(
+                "978-2-3915-3957-4",
+                "The Girls in the Veils",
+                Year.of(1947),
+                "Cole Lyon",
+                "fiction",
+                "horror",
+                4200
+        );
+        updatedBook.setId(newBookId);
+
+        Book expectedReturnedBook = new Book(
+                "978-2-3915-3957-4",
+                "The Girls in the Veils",
+                Year.of(1947),
+                "Cole Lyon",
+                "fiction",
+                "horror",
+                4200
+        );
+        expectedReturnedBook.setId(bookId);
+        given(bookRepository.findById(bookId)).willReturn(Optional.of(initialBook));
+        given(bookRepository.save(updatedBook)).willReturn(expectedReturnedBook);
+
+        // when
+        Book returnedBook = underTest.fullUpdate(bookId, updatedBook);
+
+        // then
+        verify(bookRepository).findById(
+                argThat(id -> id.equals(bookId))
+        );
+        verify(logger).warn("Cannot update internal book ID from {} to {}; saving under ID {}", bookId, newBookId, bookId);
+
+        ArgumentCaptor<Book> bookArgumentCaptor = ArgumentCaptor.forClass(Book.class);
+        verify(bookRepository).save(bookArgumentCaptor.capture());
+        Book capturedBook = bookArgumentCaptor.getValue();
+
+        assertThat(capturedBook).isEqualTo(updatedBook);
+        assertThat(returnedBook).isEqualTo(expectedReturnedBook);
+    }
+
+    @Test
     void fullUpdateNonExistingBook() {
         // given
         Long bookId = 1L;
@@ -323,6 +384,45 @@ class BookServiceTest {
         assertThatThrownBy(() -> underTest.fullUpdate(bookId, updatedBook))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("book with ID " + bookId + " does not exist");
+        verify(bookRepository).findById(
+                argThat(id -> id.equals(bookId))
+        );
+        verify(bookRepository, never()).save(any());
+    }
+
+    @Test
+    void fullUpdateExistingDeletedBook() {
+        // given
+        Long bookId = 1L;
+
+        Book existingBook = new Book(
+                "978-2-3915-3957-4",
+                "The Girl in the Veil",
+                Year.of(1948),
+                "Cole Lyons",
+                "fiction",
+                "horror",
+                4200
+        );
+        existingBook.setId(bookId);
+        existingBook.setDeleted(true);
+
+        Book updatedBook = new Book(
+                "978-2-3915-3957-4",
+                "The Girls in the Veils",
+                Year.of(1947),
+                "Cole Lyon",
+                "fiction",
+                "horror",
+                4200
+        );
+        given(bookRepository.findById(bookId)).willReturn(Optional.of(existingBook));
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.fullUpdate(bookId, updatedBook))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("book with ID " + bookId + " has been deleted");
         verify(bookRepository).findById(
                 argThat(id -> id.equals(bookId))
         );
@@ -470,6 +570,48 @@ class BookServiceTest {
     }
 
     @Test
+    void partialUpdateExistingDeletedBook() throws IOException {
+        // given
+        Long bookId = 1L;
+
+        Book existingBook = new Book(
+                "978-2-3915-3957-4",
+                "The Girl in the Veil",
+                Year.of(1948),
+                "Cole Lyons",
+                "fiction",
+                "horror",
+                4200
+        );
+        existingBook.setId(bookId);
+        existingBook.setDeleted(true);
+
+        @SuppressWarnings("JsonStandardCompliance") String updatedTitle = "The Boy in the Veil";
+
+        String jsonString = "[{" +
+                "\"op\": \"replace\"," +
+                "\"path\": \"/title\"," +
+                "\"value\": \"" + updatedTitle + "\"" +
+                "}]";
+        ObjectMapper mapper = JsonMapper.builder()
+                .findAndAddModules()
+                .build();
+        JsonNode bookJson = mapper.readTree(jsonString);
+        JsonPatch jsonPatch = JsonPatch.fromJson(bookJson);
+        given(bookRepository.findById(bookId)).willReturn(Optional.of(existingBook));
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.partialUpdate(bookId, jsonPatch))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("book with ID " + bookId + " has been deleted");
+        verify(bookRepository).findById(
+                argThat(id -> id.equals(bookId))
+        );
+        verify(bookRepository, never()).save(any());
+    }
+
+    @Test
     void partialUpdateExistingBookNewIsbnExistsForNonDeletedBook() throws IOException {
         // given
         Long book1Id = 1L;
@@ -520,6 +662,55 @@ class BookServiceTest {
                 argThat(id -> id.equals(book1Id))
         );
         verify(bookRepository, never()).save(any());
+    }
+
+    // TODO make sure updating ID throws an exception, rather than has no effect
+    @Test
+    void partialUpdateBookId() throws IOException, JsonPatchException {
+        // given
+        Long bookId = 1L;
+
+        Book existingBook = new Book(
+                "978-2-3915-3957-4",
+                "The Girl in the Veil",
+                Year.of(1948),
+                "Cole Lyons",
+                "fiction",
+                "horror",
+                4200
+        );
+        existingBook.setId(bookId);
+
+        long updatedId = 2L;
+
+        String jsonString = "[{" +
+                "\"op\": \"replace\"," +
+                "\"path\": \"/id\"," +
+                "\"value\": \"" + updatedId + "\"" +
+                "}]";
+        ObjectMapper mapper = JsonMapper.builder()
+                .findAndAddModules()
+                .build();
+        JsonNode bookJson = mapper.readTree(jsonString);
+        JsonPatch jsonPatch = JsonPatch.fromJson(bookJson);
+        given(bookRepository.findById(bookId)).willReturn(Optional.of(existingBook));
+        given(bookRepository.save(existingBook)).willReturn(existingBook);
+
+        // when
+        Book returnedBook = underTest.partialUpdate(bookId, jsonPatch);
+
+        // then
+        verify(bookRepository).findById(
+                argThat(id -> id.equals(bookId))
+        );
+
+        ArgumentCaptor<Book> bookArgumentCaptor = ArgumentCaptor.forClass(Book.class);
+        verify(bookRepository).save(bookArgumentCaptor.capture());
+        Book capturedBook = bookArgumentCaptor.getValue();
+
+        assertThat(capturedBook).isEqualTo(existingBook);
+        assertThat(returnedBook).isEqualTo(existingBook);
+        assertThat(returnedBook.getId()).isEqualTo(bookId);
     }
 
     @Test

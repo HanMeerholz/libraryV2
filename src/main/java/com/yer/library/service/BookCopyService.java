@@ -8,6 +8,9 @@ import com.github.fge.jsonpatch.JsonPatch;
 import com.github.fge.jsonpatch.JsonPatchException;
 import com.yer.library.model.Book;
 import com.yer.library.model.BookCopy;
+import com.yer.library.model.dtos.BookCopyDTO;
+import com.yer.library.model.dtos.jsonviews.View;
+import com.yer.library.model.dtos.mappers.BookCopyMapper;
 import com.yer.library.repository.BookCopyRepository;
 import com.yer.library.repository.BookRepository;
 import lombok.RequiredArgsConstructor;
@@ -83,19 +86,29 @@ public class BookCopyService implements CrudService<BookCopy> {
     }
 
     @Override
-    public BookCopy fullUpdate(Long bookCopyId, BookCopy updateBookCopy) {
-        if (!bookCopyRepository.existsById(bookCopyId)) {
+    public BookCopy fullUpdate(Long bookCopyId, BookCopy updatedBookCopy) {
+        BookCopy existingBookCopy = bookCopyRepository.findById(bookCopyId).orElseThrow(
+                () -> new IllegalStateException(
+                        "book copy with ID " + bookCopyId + " does not exist"
+                )
+        );
+        if (existingBookCopy.getDeleted()) {
             throw new IllegalStateException(
-                    "book copy with ID " + bookCopyId + " does not exist"
+                    "book copy with ID " + bookCopyId + " has been deleted"
             );
         }
-        updateBookCopy.setId(bookCopyId);
+        updatedBookCopy.setId(bookCopyId);
 
-        return bookCopyRepository.save(updateBookCopy);
+        return bookCopyRepository.save(updatedBookCopy);
     }
 
-    public BookCopy fullUpdate(Long bookCopyId, BookCopy updateBookCopy, Long bookId) {
+    public BookCopy fullUpdate(Long bookCopyId, BookCopy updatedBookCopy, Long bookId) {
         log.info("Updating book copy with ID: {}", bookCopyId);
+
+        Long updatedId = updatedBookCopy.getId();
+        if (updatedId != null && !updatedId.equals(bookId)) {
+            log.warn("Cannot update internal book copy ID from {} to {}; saving under ID {}", bookId, updatedId, bookId);
+        }
 
         Book book = bookRepository.findById(bookId).orElseThrow(
                 () -> new IllegalStateException("cannot update book copy for book: book with ID " + bookId + " does not exist")
@@ -104,12 +117,11 @@ public class BookCopyService implements CrudService<BookCopy> {
             throw new IllegalStateException("cannot update book copy for book: book with ID " + bookId + " has been deleted");
         }
 
-        updateBookCopy.setBook(book);
+        updatedBookCopy.setBook(book);
 
-        return fullUpdate(bookCopyId, updateBookCopy);
+        return fullUpdate(bookCopyId, updatedBookCopy);
     }
 
-    @Transactional
     public BookCopy partialUpdate(Long bookCopyId, JsonPatch jsonPatch) throws JsonPatchException, JsonProcessingException {
         log.info("Updating book copy with ID: {}", bookCopyId);
 
@@ -118,21 +130,30 @@ public class BookCopyService implements CrudService<BookCopy> {
                         "book copy with ID " + bookCopyId + " does not exist"
                 )
         );
+        if (existingBookCopy.getDeleted()) {
+            throw new IllegalStateException(
+                    "book copy with ID " + bookCopyId + " has been deleted"
+            );
+        }
 
-        JsonNode existingBookCopyJson = mapper.convertValue(existingBookCopy, JsonNode.class);
+        BookCopyDTO existingBookCopyDTO = BookCopyMapper.INSTANCE.toBookCopyDTO(existingBookCopy);
+
+        // configure ObjectMapper instance to include JsonView in its deserializer config (View.PatchView.class in this case)
+        mapper.setConfig(mapper.getDeserializationConfig()
+                .withView(View.PatchView.class));
+
+        JsonNode existingBookCopyJson = mapper.convertValue(existingBookCopyDTO, JsonNode.class);
         JsonNode patched = jsonPatch.apply(existingBookCopyJson);
 
-        BookCopy updatedBookCopy = mapper.treeToValue(patched, BookCopy.class);
-
-
-        Long bookId = updatedBookCopy.getBook().getId();
-
-        Book book = bookRepository.findById(bookId).orElseThrow(
-                () -> new IllegalStateException("cannot update book copy for book: book with ID " + bookId + " does not exist")
-        );
-        if (book.getDeleted()) {
-            throw new IllegalStateException("cannot update book copy for book: book with ID " + bookId + " has been deleted");
+        BookCopyDTO updatedBookCopyDTO = mapper.treeToValue(patched, BookCopyDTO.class);
+        BookCopy updatedBookCopy;
+        try {
+            updatedBookCopy = BookCopyMapper.INSTANCE.toBookCopy(updatedBookCopyDTO, bookRepository);
+        } catch (IllegalStateException e) {
+            throw new IllegalStateException("cannot update book copy for book: " + e.getMessage());
         }
+
+        updatedBookCopy.setId(existingBookCopy.getId());
 
         return bookCopyRepository.save(updatedBookCopy);
     }
@@ -156,47 +177,4 @@ public class BookCopyService implements CrudService<BookCopy> {
 
         return TRUE;
     }
-
-//    @Transactional
-//    public BookCopy partialUpdate(Long bookCopyId, Short locFloor, Short locBookcase, Short locShelve) {
-//        log.info("Updating book copy with id: {}", bookCopyId);
-//        BookCopy bookCopy = bookCopyRepository.findById(bookCopyId).orElseThrow(
-//                () -> new IllegalStateException(
-//                        "book copy with id " + bookCopyId + " does not exist"
-//                )
-//        );
-//
-//        if (locFloor == null) locFloor = bookCopy.getLocation().getFloor();
-//        if (locBookcase == null) locBookcase = bookCopy.getLocation().getBookcase();
-//        if (locShelve == null) locShelve = bookCopy.getLocation().getShelve();
-//
-//        Location location = new Location(locFloor, locBookcase, locShelve);
-//
-//        if (!Objects.equals(bookCopy.getLocation(), location)) {
-//            bookCopy.setLocation(location);
-//        }
-//
-//        return bookCopy;
-//    }
-//
-//    @Transactional
-//    public BookCopy delete(Long bookCopyId) {
-//        log.info("Deleting book copy with id: {}", bookCopyId);
-//
-//        BookCopy bookCopy = bookCopyRepository.findById(bookCopyId).orElseThrow(
-//                () -> new IllegalStateException(
-//                        "book copy with id " + bookCopyId + " does not exist"
-//                )
-//        );
-//
-//        if (bookCopy.getDeleted()) {
-//            throw new IllegalStateException(
-//                    "book copy with id " + bookCopyId + " has already been deleted"
-//            );
-//        }
-//        bookCopy.setDeleted(true);
-//
-//        return bookCopy;
-//    }
-
 }

@@ -17,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.Logger;
 import org.springframework.data.domain.Pageable;
 
 import java.io.IOException;
@@ -37,6 +38,9 @@ class BookCopyServiceTest {
 
     @Mock
     private BookRepository bookRepository;
+
+    @Mock
+    private Logger logger;
 
     @InjectMocks
     @Spy
@@ -366,6 +370,11 @@ class BookCopyServiceTest {
         book.setId(bookId);
 
         Long bookCopyId = 1L;
+        BookCopy initialBookCopy = new BookCopy(
+                book,
+                new Location((short) 1, (short) 1, (short) 1)
+        );
+        initialBookCopy.setId(bookCopyId);
         BookCopy updatedBookCopy = new BookCopy(
                 book,
                 new Location((short) 2, (short) 2, (short) 2)
@@ -376,14 +385,14 @@ class BookCopyServiceTest {
         );
         expectedReturnedBookCopy.setId(bookCopyId);
 
-        given(bookCopyRepository.existsById(bookCopyId)).willReturn(true);
+        given(bookCopyRepository.findById(bookCopyId)).willReturn(Optional.of(initialBookCopy));
         given(bookCopyRepository.save(updatedBookCopy)).willReturn(expectedReturnedBookCopy);
 
         // when
         BookCopy returnedCopy = underTest.fullUpdate(bookCopyId, updatedBookCopy);
 
         // then
-        verify(bookCopyRepository).existsById(
+        verify(bookCopyRepository).findById(
                 argThat(id -> id.equals(bookCopyId))
         );
         ArgumentCaptor<BookCopy> bookCopyArgumentCaptor = ArgumentCaptor.forClass(BookCopy.class);
@@ -420,14 +429,61 @@ class BookCopyServiceTest {
         );
         expectedReturnedBookCopy.setId(bookCopyId);
 
-        given(bookCopyRepository.existsById(bookCopyId)).willReturn(false);
+        given(bookCopyRepository.findById(bookCopyId)).willReturn(Optional.empty());
 
         // when
         // then
         assertThatThrownBy(() -> underTest.fullUpdate(bookCopyId, updatedBookCopy))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("book copy with ID " + bookCopyId + " does not exist");
-        verify(bookCopyRepository).existsById(
+        verify(bookCopyRepository).findById(
+                argThat(id -> id.equals(bookCopyId))
+        );
+        verify(bookCopyRepository, never()).save(any());
+    }
+
+    @Test
+    void fullUpdateExistingDeletedBookCopyWithBook() {
+        // given
+        Long bookId = 1L;
+        Book book = new Book(
+                "978-2-3915-3957-4",
+                "The Girl in the Veil",
+                Year.of(1948),
+                "Cole Lyons",
+                "fiction",
+                "horror",
+                4200
+        );
+        book.setId(bookId);
+
+        Long bookCopyId = 1L;
+
+        BookCopy existingBookCopy = new BookCopy(
+                book,
+                new Location((short) 1, (short) 1, (short) 1)
+        );
+        existingBookCopy.setId(bookCopyId);
+        existingBookCopy.setDeleted(true);
+
+        BookCopy updatedBookCopy = new BookCopy(
+                book,
+                new Location((short) 2, (short) 2, (short) 2)
+        );
+        BookCopy expectedReturnedBookCopy = new BookCopy(
+                book,
+                new Location((short) 2, (short) 2, (short) 2)
+        );
+        expectedReturnedBookCopy.setId(bookCopyId);
+
+        given(bookCopyRepository.findById(bookCopyId)).willReturn(Optional.of(existingBookCopy));
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.fullUpdate(bookCopyId, updatedBookCopy))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("book copy with ID " + bookCopyId + " has been deleted");
+        verify(bookCopyRepository).findById(
                 argThat(id -> id.equals(bookCopyId))
         );
         verify(bookCopyRepository, never()).save(any());
@@ -549,6 +605,67 @@ class BookCopyServiceTest {
     }
 
     @Test
+    void fullUpdateValidBookCopyNewId() {
+        // given
+        Long bookId = 1L;
+        Book book = new Book(
+                "978-2-3915-3957-4",
+                "The Girl in the Veil",
+                Year.of(1948),
+                "Cole Lyons",
+                "fiction",
+                "horror",
+                4200
+        );
+        book.setId(bookId);
+
+        Long newBookCopyId = 2L;
+        BookCopy updatedBookCopy = new BookCopy(
+                null,
+                new Location((short) 2, (short) 2, (short) 2)
+        );
+        updatedBookCopy.setId(newBookCopyId);
+        Long bookCopyId = 1L;
+
+        BookCopy updatedBookCopyWithBook = new BookCopy(
+                book,
+                new Location((short) 2, (short) 2, (short) 2)
+        );
+        updatedBookCopyWithBook.setId(newBookCopyId);
+
+        BookCopy expectedReturnedBookCopy = new BookCopy(
+                book,
+                new Location((short) 2, (short) 2, (short) 2)
+        );
+        expectedReturnedBookCopy.setId(bookCopyId);
+
+        willReturn(Optional.of(book)).given(bookRepository).findById(bookId);
+        // once again expected with any() argument because of BookCopy#equals() returning false if id is null
+        willReturn(expectedReturnedBookCopy).given(underTest).fullUpdate(eq(bookCopyId), any(BookCopy.class));
+
+        // when
+        BookCopy returnedBookCopy = underTest.fullUpdate(bookCopyId, updatedBookCopy, bookId);
+
+        // then
+        ArgumentCaptor<BookCopy> bookCopyArgumentCaptor = ArgumentCaptor.forClass(BookCopy.class);
+        verify(underTest).fullUpdate(
+                argThat(id -> id.equals(bookCopyId)),
+                bookCopyArgumentCaptor.capture()
+        );
+        verify(logger).warn("Cannot update internal book copy ID from {} to {}; saving under ID {}", bookCopyId, newBookCopyId, bookCopyId);
+
+        BookCopy capturedBookCopy = bookCopyArgumentCaptor.getValue();
+        // compare fields instead of object directly, because BookCopy#equals() returns "false"
+        // if id is null
+        assertThat(capturedBookCopy.getId()).isEqualTo(updatedBookCopyWithBook.getId());
+        assertThat(capturedBookCopy.getBook()).isEqualTo(updatedBookCopyWithBook.getBook());
+        assertThat(capturedBookCopy.getLocation()).isEqualTo(updatedBookCopyWithBook.getLocation());
+        assertThat(capturedBookCopy.getDeleted()).isEqualTo(updatedBookCopyWithBook.getDeleted());
+
+        assertThat(returnedBookCopy).isEqualTo(expectedReturnedBookCopy);
+    }
+
+    @Test
     void partialUpdateValidBookCopy() throws IOException, JsonPatchException {
         // given
         Long bookId = 1L;
@@ -589,7 +706,8 @@ class BookCopyServiceTest {
         JsonNode bookCopyJson = mapper.readTree(jsonString);
         JsonPatch jsonPatch = JsonPatch.fromJson(bookCopyJson);
 
-        given(bookCopyRepository.findById(bookId)).willReturn(Optional.of(existingBookCopy));
+        given(bookCopyRepository.findById(bookCopyId)).willReturn(Optional.of(existingBookCopy));
+        given(bookRepository.findById(bookId)).willReturn(Optional.of(book));
         given(bookCopyRepository.save(updatedBookCopy)).willReturn(updatedBookCopy);
 
         // when
@@ -641,6 +759,54 @@ class BookCopyServiceTest {
     }
 
     @Test
+    void partialUpdateExistingDeletedBookCopy() throws IOException {
+        // given
+        Long existingBookId = 1L;
+        Book existingBook = new Book(
+                "978-2-3915-3957-4",
+                "The Girl in the Veil",
+                Year.of(1948),
+                "Cole Lyons",
+                "fiction",
+                "horror",
+                4200
+        );
+        existingBook.setId(existingBookId);
+
+        Long bookCopyId = 1L;
+        BookCopy existingBookCopy = new BookCopy(
+                existingBook,
+                new Location((short) 1, (short) 1, (short) 1)
+        );
+        existingBookCopy.setId(bookCopyId);
+        existingBookCopy.setDeleted(true);
+
+        Location updatedLocation = new Location((short) 2, (short) 2, (short) 2);
+
+        ObjectMapper mapper = JsonMapper.builder()
+                .findAndAddModules()
+                .build();
+        String jsonString = "[{" +
+                "\"op\": \"replace\"," +
+                "\"path\": \"/location\"," +
+                "\"value\":" + mapper.convertValue(updatedLocation, JsonNode.class) +
+                "}]";
+        JsonNode bookCopyJson = mapper.readTree(jsonString);
+        JsonPatch jsonPatch = JsonPatch.fromJson(bookCopyJson);
+        given(bookCopyRepository.findById(bookCopyId)).willReturn(Optional.of(existingBookCopy));
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.partialUpdate(bookCopyId, jsonPatch))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("book copy with ID " + bookCopyId + " has been deleted");
+        verify(bookCopyRepository).findById(
+                argThat(id -> id.equals(bookCopyId))
+        );
+        verify(bookCopyRepository, never()).save(any());
+    }
+
+    @Test
     void partialUpdateBookCopyBookForNonExistingBook() throws IOException {
         // given
         Long existingBookId = 1L;
@@ -669,8 +835,8 @@ class BookCopyServiceTest {
                 .build();
         String jsonString = "[{" +
                 "\"op\": \"replace\"," +
-                "\"path\": \"/book\"," +
-                "\"value\":" + "{\"id\": " + updatedBookId + "}" +
+                "\"path\": \"/bookId\"," +
+                "\"value\":" + updatedBookId +
                 "}]";
         JsonNode bookCopyJson = mapper.readTree(jsonString);
         JsonPatch jsonPatch = JsonPatch.fromJson(bookCopyJson);
@@ -729,8 +895,8 @@ class BookCopyServiceTest {
                 .build();
         String jsonString = "[{" +
                 "\"op\": \"replace\"," +
-                "\"path\": \"/book\"," +
-                "\"value\":" + "{\"id\": " + existingBook2Id + "}" +
+                "\"path\": \"/bookId\"," +
+                "\"value\":" + existingBook2Id +
                 "}]";
         JsonNode bookCopyJson = mapper.readTree(jsonString);
         JsonPatch jsonPatch = JsonPatch.fromJson(bookCopyJson);
@@ -742,7 +908,7 @@ class BookCopyServiceTest {
         // then
         assertThatThrownBy(() -> underTest.partialUpdate(bookCopyId, jsonPatch))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("cannot update book copy for book: book with ID " + existingBook2Id + " has been deleted");
+                .hasMessageContaining("book with ID " + existingBook2Id + " has been deleted");
         verify(bookCopyRepository).findById(
                 argThat(id -> id.equals(bookCopyId))
         );
