@@ -12,13 +12,13 @@ import javax.validation.constraints.NotBlank;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BookCopyDTO {
     @JsonView(View.GetView.class)
-    Long id;
+    private Long id;
 
     @JsonView(View.PatchView.class)
     @NotBlank
-    Long bookId;
+    private Long bookId;
 
     @JsonView(View.PatchView.class)
     @NotBlank
-    Location location;
+    private Location location;
 }

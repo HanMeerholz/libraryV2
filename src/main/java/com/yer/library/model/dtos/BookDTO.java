@@ -13,33 +13,33 @@ import java.time.Year;
 public class BookDTO {
 
     @JsonView(View.GetView.class)
-    Long id;
+    private Long id;
 
     @JsonView(View.PatchView.class)
     @NotBlank
-    String isbn;
+    private String isbn;
 
     @JsonView(View.PatchView.class)
     @NotBlank
-    String title;
+    private String title;
 
     @JsonView(View.PatchView.class)
     @NotBlank
-    Year year;
+    private Year year;
 
     @JsonView(View.PatchView.class)
     @NotBlank
-    String author;
+    private String author;
 
     @JsonView(View.PatchView.class)
     @NotBlank
-    String type;
+    private String type;
 
     @JsonView(View.PatchView.class)
     @NotBlank
-    String genre;
+    private String genre;
 
     @JsonView(View.PatchView.class)
     @NotBlank
-    Integer value;
+    private Integer value;
 }

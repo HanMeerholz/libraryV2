@@ -122,6 +122,7 @@ public class BookCopyService implements CrudService<BookCopy> {
         return fullUpdate(bookCopyId, updatedBookCopy);
     }
 
+    @Override
     public BookCopy partialUpdate(Long bookCopyId, JsonPatch jsonPatch) throws JsonPatchException, JsonProcessingException {
         log.info("Updating book copy with ID: {}", bookCopyId);
 
@@ -146,12 +147,7 @@ public class BookCopyService implements CrudService<BookCopy> {
         JsonNode patched = jsonPatch.apply(existingBookCopyJson);
 
         BookCopyDTO updatedBookCopyDTO = mapper.treeToValue(patched, BookCopyDTO.class);
-        BookCopy updatedBookCopy;
-        try {
-            updatedBookCopy = BookCopyMapper.INSTANCE.toBookCopy(updatedBookCopyDTO, bookRepository);
-        } catch (IllegalStateException e) {
-            throw new IllegalStateException("cannot update book copy for book: " + e.getMessage());
-        }
+        BookCopy updatedBookCopy = BookCopyMapper.INSTANCE.toBookCopy(updatedBookCopyDTO, bookRepository);
 
         updatedBookCopy.setId(existingBookCopy.getId());
 

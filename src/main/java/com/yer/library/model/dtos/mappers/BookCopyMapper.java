@@ -11,7 +11,7 @@ import org.mapstruct.factory.Mappers;
 public interface BookCopyMapper {
     BookCopyMapper INSTANCE = Mappers.getMapper(BookCopyMapper.class);
 
-    @Mapping(target = "bookId", expression = "java(bookCopy.getId())")
+    @Mapping(target = "bookId", expression = "java(bookCopy.getBook().getId())")
     BookCopyDTO toBookCopyDTO(BookCopy bookCopy);
 
     @Mapping(target = "book", ignore = true)

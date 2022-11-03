@@ -848,7 +848,7 @@ class BookCopyServiceTest {
         // then
         assertThatThrownBy(() -> underTest.partialUpdate(bookCopyId, jsonPatch))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("cannot update book copy for book: book with ID " + updatedBookId + " does not exist");
+                .hasMessageContaining("book with ID " + updatedBookId + " does not exist");
         verify(bookCopyRepository).findById(
                 argThat(id -> id.equals(bookCopyId))
         );

@@ -99,6 +99,7 @@ public class BookService implements CrudService<Book> {
     }
 
     // TODO maybe make sure save() isn't called if the value isn't updated
+    @Override
     public Book partialUpdate(Long bookId, JsonPatch jsonPatch) throws JsonPatchException, JsonProcessingException {
         log.info("Updating book with ID: {}", bookId);
 

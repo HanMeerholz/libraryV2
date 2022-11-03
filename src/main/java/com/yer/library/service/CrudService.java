@@ -1,5 +1,9 @@
 package com.yer.library.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.github.fge.jsonpatch.JsonPatch;
+import com.github.fge.jsonpatch.JsonPatchException;
+
 import java.util.Collection;
 
 public interface CrudService<T> {
@@ -9,8 +13,9 @@ public interface CrudService<T> {
 
     T add(T object);
 
+    T partialUpdate(Long id, JsonPatch jsonPatch) throws JsonPatchException, JsonProcessingException;
+
     T fullUpdate(Long id, T object);
 
     Boolean delete(Long id);
-    // public T partialUpdate(T object);
 }
