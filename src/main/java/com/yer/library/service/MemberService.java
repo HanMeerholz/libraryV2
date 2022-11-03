@@ -1,7 +1,16 @@
 package com.yer.library.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.github.fge.jsonpatch.JsonPatch;
+import com.github.fge.jsonpatch.JsonPatchException;
 import com.yer.library.model.Member;
 import com.yer.library.model.Membership;
+import com.yer.library.model.dtos.MemberDTO;
+import com.yer.library.model.dtos.jsonviews.View;
+import com.yer.library.model.dtos.mappers.MemberMapper;
 import com.yer.library.repository.MemberRepository;
 import com.yer.library.repository.MembershipRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +31,10 @@ import static org.springframework.data.domain.PageRequest.ofSize;
 public class MemberService implements CrudService<Member> {
     private final MemberRepository memberRepository;
     private final MembershipRepository membershipRepository;
+
+    private final ObjectMapper mapper = JsonMapper.builder()
+            .findAndAddModules()
+            .build();
 
     @Override
     public Member get(Long memberId) {
@@ -101,21 +114,58 @@ public class MemberService implements CrudService<Member> {
         return updatedMember;
     }
 
-    public Member fullUpdate(Long memberId, Member member, Long membershipId) {
+    public Member fullUpdate(Long memberId, Member updatedMember, Long membershipId) {
         log.info("Updating member with ID: {}", memberId);
 
+        Long updatedId = updatedMember.getId();
+        if (updatedId != null && !updatedId.equals(memberId)) {
+            log.warn("Cannot update internal member ID from {} to {}; saving under ID {}", memberId, updatedId, memberId);
+        }
+
         if (membershipId == null) {
-            member.setMembership(null);
-            return fullUpdate(memberId, member);
+            updatedMember.setMembership(null);
+            return fullUpdate(memberId, updatedMember);
         }
 
         Membership membership = membershipRepository.findById(membershipId).orElseThrow(
                 () -> new IllegalStateException("cannot update member for membership: membership with ID " + membershipId + " does not exist")
         );
 
-        member.setMembership(membership);
+        updatedMember.setMembership(membership);
 
-        return fullUpdate(memberId, member);
+        return fullUpdate(memberId, updatedMember);
+    }
+
+    @Override
+    public Member partialUpdate(Long memberId, JsonPatch jsonPatch) throws JsonPatchException, JsonProcessingException {
+        log.info("Updating member with ID: {}", memberId);
+
+        Member existingMember = memberRepository.findById(memberId).orElseThrow(
+                () -> new IllegalStateException(
+                        "member with ID " + memberId + " does not exist"
+                )
+        );
+        if (existingMember.getDeleted()) {
+            throw new IllegalStateException(
+                    "member with ID " + memberId + " has been deleted"
+            );
+        }
+
+        MemberDTO existingMemberDTO = MemberMapper.INSTANCE.toMemberDTO(existingMember);
+
+        // configure ObjectMapper instance to include JsonView in its deserializer config (View.PatchView.class in this case)
+        mapper.setConfig(mapper.getDeserializationConfig()
+                .withView(View.PatchView.class));
+
+        JsonNode existingMemberJson = mapper.convertValue(existingMemberDTO, JsonNode.class);
+        JsonNode patched = jsonPatch.apply(existingMemberJson);
+
+        MemberDTO updatedMemberDTO = mapper.treeToValue(patched, MemberDTO.class);
+        Member updatedMember = MemberMapper.INSTANCE.toMember(updatedMemberDTO, membershipRepository);
+
+        updatedMember.setId(existingMember.getId());
+
+        return memberRepository.save(updatedMember);
     }
 
     @Override

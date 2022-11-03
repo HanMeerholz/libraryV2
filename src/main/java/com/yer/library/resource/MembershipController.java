@@ -1,5 +1,8 @@
 package com.yer.library.resource;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.github.fge.jsonpatch.JsonPatch;
+import com.github.fge.jsonpatch.JsonPatchException;
 import com.yer.library.model.Membership;
 import com.yer.library.model.Response;
 import com.yer.library.service.MembershipService;
@@ -59,6 +62,7 @@ public class MembershipController {
         );
     }
 
+
     @PostMapping
     public ResponseEntity<Response> addMembership(
             @RequestParam Long membershipTypeId,
@@ -85,6 +89,22 @@ public class MembershipController {
                 Response.builder()
                         .timeStamp(now())
                         .data(getDataMap("membership", membershipService.fullUpdate(membershipId, membership, membershipTypeId)))
+                        .message("Membership " + membershipId + " updated")
+                        .status(OK)
+                        .statusCode(OK.value())
+                        .build()
+        );
+    }
+
+    @PatchMapping(path = "{membershipId}")
+    public ResponseEntity<Response> partiallyUpdateMembership(
+            @PathVariable("membershipId") Long membershipId,
+            @RequestBody JsonPatch jsonPatch
+    ) throws JsonPatchException, JsonProcessingException {
+        return ResponseEntity.ok(
+                Response.builder()
+                        .timeStamp(now())
+                        .data(getDataMap("membership", membershipService.partialUpdate(membershipId, jsonPatch)))
                         .message("Membership " + membershipId + " updated")
                         .status(OK)
                         .statusCode(OK.value())

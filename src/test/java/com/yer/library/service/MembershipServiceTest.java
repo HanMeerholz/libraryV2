@@ -1,5 +1,10 @@
 package com.yer.library.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.github.fge.jsonpatch.JsonPatch;
+import com.github.fge.jsonpatch.JsonPatchException;
 import com.yer.library.model.Member;
 import com.yer.library.model.Membership;
 import com.yer.library.model.MembershipType;
@@ -13,8 +18,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.Logger;
 import org.springframework.data.domain.Pageable;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.Arrays;
@@ -36,6 +43,9 @@ class MembershipServiceTest {
 
     @Mock
     private MembershipTypeRepository membershipTypeRepository;
+
+    @Mock
+    private Logger logger;
 
     @InjectMocks
     @Spy
@@ -431,6 +441,242 @@ class MembershipServiceTest {
         assertThat(capturedMembership.getDeleted()).isEqualTo(updatedMembershipWithType.getDeleted());
 
         assertThat(returnedMembership).isEqualTo(expectedReturnedMembership);
+    }
+
+    @Test
+    void fullUpdateValidMembershipNewId() {
+        // given
+        Long membershipTypeId = 1L;
+        MembershipType membershipType = new MembershipType(
+                MembershipTypeName.CHILD, 0
+        );
+        membershipType.setId(membershipTypeId);
+
+        Long newMembershipId = 2L;
+        Membership updatedMembership = new Membership(
+                null,
+                LocalDate.of(2019, Month.MARCH, 3),
+                LocalDate.of(2021, Month.MARCH, 3)
+        );
+        updatedMembership.setId(newMembershipId);
+        Membership updatedMembershipWithType = new Membership(
+                membershipType,
+                LocalDate.of(2019, Month.MARCH, 3),
+                LocalDate.of(2021, Month.MARCH, 3)
+        );
+        updatedMembershipWithType.setId(newMembershipId);
+        Long membershipId = 1L;
+        Membership expectedReturnedMembership = new Membership(
+                membershipType,
+                LocalDate.of(2019, Month.MARCH, 3),
+                LocalDate.of(2021, Month.MARCH, 3)
+        );
+        expectedReturnedMembership.setId(membershipId);
+
+        willReturn(Optional.of(membershipType)).given(membershipTypeRepository).findById(membershipTypeId);
+        // once again expected with any() argument because of BookCopy#equals() returning false if id is null
+        willReturn(expectedReturnedMembership).given(underTest).fullUpdate(eq(membershipId), any(Membership.class));
+
+        // when
+        Membership returnedMembership = underTest.fullUpdate(membershipId, updatedMembership, membershipTypeId);
+
+        // then
+        ArgumentCaptor<Membership> membershipArgumentCaptor = ArgumentCaptor.forClass(Membership.class);
+        verify(underTest).fullUpdate(
+                argThat(id -> id.equals(membershipId)),
+                membershipArgumentCaptor.capture()
+        );
+        verify(logger).warn("Cannot update internal membership ID from {} to {}; saving under ID {}", membershipId, newMembershipId, membershipId);
+        Membership capturedMembership = membershipArgumentCaptor.getValue();
+        // compare fields instead of object directly, because Membership#equals() returns "false"
+        // if ID is null
+        assertThat(capturedMembership.getId()).isEqualTo(updatedMembershipWithType.getId());
+        assertThat(capturedMembership.getMembershipType()).isEqualTo(updatedMembershipWithType.getMembershipType());
+        assertThat(capturedMembership.getStartDate()).isEqualTo(updatedMembershipWithType.getStartDate());
+        assertThat(capturedMembership.getEndDate()).isEqualTo(updatedMembershipWithType.getEndDate());
+        assertThat(capturedMembership.getMembers()).isEqualTo(updatedMembershipWithType.getMembers());
+        assertThat(capturedMembership.getDeleted()).isEqualTo(updatedMembershipWithType.getDeleted());
+
+        assertThat(returnedMembership).isEqualTo(expectedReturnedMembership);
+    }
+
+    @Test
+    void partialUpdateValidMembership() throws IOException, JsonPatchException {
+        // given
+        Long membershipTypeId = 1L;
+        MembershipType membershipType = new MembershipType(
+                MembershipTypeName.CHILD, 0
+        );
+        membershipType.setId(membershipTypeId);
+
+        Long membershipId = 1L;
+        Membership existingMembership = new Membership(
+                membershipType,
+                LocalDate.of(2019, Month.MARCH, 3),
+                LocalDate.of(2021, Month.MARCH, 3)
+        );
+        existingMembership.setId(membershipId);
+
+        LocalDate updatedEndDate = LocalDate.of(2022, Month.MARCH, 3);
+        Membership updatedMembership = new Membership(
+                membershipType,
+                LocalDate.of(2019, Month.MARCH, 3),
+                updatedEndDate
+        );
+        updatedMembership.setId(membershipId);
+
+
+        ObjectMapper mapper = JsonMapper.builder()
+                .findAndAddModules()
+                .build();
+        String jsonString = "[{" +
+                "\"op\": \"replace\"," +
+                "\"path\": \"/endDate\"," +
+                "\"value\":\"" + updatedEndDate + "\"" +
+                "}]";
+        JsonNode membershipJson = mapper.readTree(jsonString);
+        JsonPatch jsonPatch = JsonPatch.fromJson(membershipJson);
+
+        given(membershipRepository.findById(membershipId)).willReturn(Optional.of(existingMembership));
+        given(membershipTypeRepository.findById(membershipTypeId)).willReturn(Optional.of(membershipType));
+        given(membershipRepository.save(updatedMembership)).willReturn(updatedMembership);
+
+        // when
+        Membership returnedMembership = underTest.partialUpdate(membershipId, jsonPatch);
+
+        // then
+        verify(membershipRepository).findById(
+                argThat(id -> id.equals(membershipId))
+        );
+
+        ArgumentCaptor<Membership> bookCopyArgumentCaptor = ArgumentCaptor.forClass(Membership.class);
+        verify(membershipRepository).save(bookCopyArgumentCaptor.capture());
+        Membership capturedMembership = bookCopyArgumentCaptor.getValue();
+
+        assertThat(capturedMembership).isEqualTo(updatedMembership);
+        assertThat(returnedMembership).isEqualTo(updatedMembership);
+        assertThat(returnedMembership.getEndDate()).isEqualTo(updatedEndDate);
+    }
+
+
+    @Test
+    void partialUpdateNonExistingMembership() throws IOException {
+        // given
+        Long membershipId = 1L;
+
+        LocalDate updatedEndDate = LocalDate.of(2022, Month.MARCH, 3);
+
+        ObjectMapper mapper = JsonMapper.builder()
+                .findAndAddModules()
+                .build();
+        String jsonString = "[{" +
+                "\"op\": \"replace\"," +
+                "\"path\": \"/endDate\"," +
+                "\"value\":\"" + updatedEndDate + "\"" +
+                "}]";
+        JsonNode membershipJson = mapper.readTree(jsonString);
+        JsonPatch jsonPatch = JsonPatch.fromJson(membershipJson);
+
+        given(membershipRepository.findById(membershipId)).willReturn(Optional.empty());
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.partialUpdate(membershipId, jsonPatch))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("membership with ID " + membershipId + " does not exist");
+        verify(membershipRepository).findById(
+                argThat(id -> id.equals(membershipId))
+        );
+        verify(membershipRepository, never()).save(any());
+    }
+
+    @Test
+    void partialUpdateExistingDeletedMembership() throws IOException {
+        // given
+        Long membershipTypeId = 1L;
+        MembershipType membershipType = new MembershipType(
+                MembershipTypeName.CHILD, 0
+        );
+        membershipType.setId(membershipTypeId);
+
+        Long membershipId = 1L;
+        Membership existingMembership = new Membership(
+                membershipType,
+                LocalDate.of(2019, Month.MARCH, 3),
+                LocalDate.of(2021, Month.MARCH, 3)
+        );
+        existingMembership.setId(membershipId);
+        existingMembership.setDeleted(true);
+
+        LocalDate updatedEndDate = LocalDate.of(2022, Month.MARCH, 3);
+
+
+        ObjectMapper mapper = JsonMapper.builder()
+                .findAndAddModules()
+                .build();
+        String jsonString = "[{" +
+                "\"op\": \"replace\"," +
+                "\"path\": \"/endDate\"," +
+                "\"value\":\"" + updatedEndDate + "\"" +
+                "}]";
+        JsonNode membershipJson = mapper.readTree(jsonString);
+        JsonPatch jsonPatch = JsonPatch.fromJson(membershipJson);
+
+        given(membershipRepository.findById(membershipId)).willReturn(Optional.of(existingMembership));
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.partialUpdate(membershipId, jsonPatch))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("membership with ID " + membershipId + " has been deleted");
+        verify(membershipRepository).findById(
+                argThat(id -> id.equals(membershipId))
+        );
+        verify(membershipRepository, never()).save(any());
+    }
+
+    @Test
+    void partialUpdateMembershipMembershipTypeForNonExistingType() throws IOException {
+        // given
+        Long membershipTypeId = 1L;
+        MembershipType membershipType = new MembershipType(
+                MembershipTypeName.CHILD, 0
+        );
+        membershipType.setId(membershipTypeId);
+
+        Long membershipId = 1L;
+        Membership existingMembership = new Membership(
+                membershipType,
+                LocalDate.of(2019, Month.MARCH, 3),
+                LocalDate.of(2021, Month.MARCH, 3)
+        );
+        existingMembership.setId(membershipId);
+
+        long updatedMembershipTypeId = 2L;
+
+        ObjectMapper mapper = JsonMapper.builder()
+                .findAndAddModules()
+                .build();
+        String jsonString = "[{" +
+                "\"op\": \"replace\"," +
+                "\"path\": \"/membershipTypeId\"," +
+                "\"value\":" + updatedMembershipTypeId +
+                "}]";
+        JsonNode membershipJson = mapper.readTree(jsonString);
+        JsonPatch jsonPatch = JsonPatch.fromJson(membershipJson);
+
+        given(membershipRepository.findById(membershipId)).willReturn(Optional.of(existingMembership));
+        given(membershipTypeRepository.findById(updatedMembershipTypeId)).willReturn(Optional.empty());
+
+        // when
+        // then
+        assertThatThrownBy(() -> underTest.partialUpdate(membershipId, jsonPatch))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("membership type with ID " + updatedMembershipTypeId + " does not exist");
+        verify(membershipRepository).findById(
+                argThat(id -> id.equals(membershipId))
+        );
+        verify(membershipRepository, never()).save(any());
     }
 
 
