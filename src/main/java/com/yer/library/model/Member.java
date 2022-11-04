@@ -1,11 +1,13 @@
 package com.yer.library.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.yer.library.model.validators.ApacheEmailConstraint;
 import lombok.*;
 import org.hibernate.Hibernate;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Past;
 import java.time.LocalDate;
 import java.util.Objects;
 
@@ -60,12 +62,14 @@ public class Member {
             columnDefinition = "VARCHAR(100)"
     )
     @NotEmpty(message = "Email cannot be empty or null")
+    @ApacheEmailConstraint
     private String emailAddress;
 
     @Column(
             name = "birthday",
             columnDefinition = "DATE"
     )
+    @Past
     private LocalDate birthday;
 
     @ManyToOne

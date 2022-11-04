@@ -8,7 +8,7 @@ import com.github.fge.jsonpatch.JsonPatchException;
 import com.yer.library.model.Member;
 import com.yer.library.model.Membership;
 import com.yer.library.model.MembershipType;
-import com.yer.library.model.MembershipTypeName;
+import com.yer.library.model.enums.MembershipTypeName;
 import com.yer.library.repository.MembershipRepository;
 import com.yer.library.repository.MembershipTypeRepository;
 import org.junit.jupiter.api.Test;

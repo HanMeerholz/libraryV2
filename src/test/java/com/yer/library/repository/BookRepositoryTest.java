@@ -1,6 +1,8 @@
 package com.yer.library.repository;
 
 import com.yer.library.model.Book;
+import com.yer.library.model.enums.BookGenre;
+import com.yer.library.model.enums.BookType;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -36,8 +38,8 @@ class BookRepositoryTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
 
@@ -61,8 +63,8 @@ class BookRepositoryTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         book.setDeleted(true);
@@ -105,8 +107,8 @@ class BookRepositoryTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         book1.setDeleted(true);
@@ -115,8 +117,8 @@ class BookRepositoryTest {
                 "Legacy Circling",
                 Year.of(2001),
                 "Arla Salgado",
-                "fiction",
-                "romantic drama",
+                BookType.FICTION,
+                BookGenre.ROMANCE,
                 4200
         );
         book2.setDeleted(true);
@@ -139,8 +141,8 @@ class BookRepositoryTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         underTest.save(book);
@@ -160,8 +162,8 @@ class BookRepositoryTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         Book book2 = new Book(
@@ -169,8 +171,8 @@ class BookRepositoryTest {
                 "Legacy Circling",
                 Year.of(2001),
                 "Arla Salgado",
-                "fiction",
-                "romantic drama",
+                BookType.FICTION,
+                BookGenre.ROMANCE,
                 4200
         );
 
@@ -192,8 +194,8 @@ class BookRepositoryTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         book1.setDeleted(true);
@@ -203,8 +205,8 @@ class BookRepositoryTest {
                 "Legacy Circling",
                 Year.of(2001),
                 "Arla Salgado",
-                "fiction",
-                "romantic drama",
+                BookType.FICTION,
+                BookGenre.ROMANCE,
                 4200
         );
 
@@ -213,8 +215,8 @@ class BookRepositoryTest {
                 "Case of the Laughing Baboon",
                 Year.of(1945),
                 "Murat McCartney",
-                "fiction",
-                "fairy tale",
+                BookType.FICTION,
+                BookGenre.FOLKLORE,
                 4200
         );
         book3.setDeleted(true);
@@ -224,8 +226,8 @@ class BookRepositoryTest {
                 "The Serpent in the Stars",
                 Year.of(1995),
                 "Tyra Daniels",
-                "nonfiction",
-                "psychology",
+                BookType.NON_FICTION,
+                BookGenre.PHILOSOPHICAL,
                 4200
         );
 
@@ -249,8 +251,8 @@ class BookRepositoryTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         Book book2 = new Book(
@@ -258,8 +260,8 @@ class BookRepositoryTest {
                 "Legacy Circling",
                 Year.of(2001),
                 "Arla Salgado",
-                "fiction",
-                "romantic drama",
+                BookType.FICTION,
+                BookGenre.ROMANCE,
                 4200
         );
         Book book3 = new Book(
@@ -267,8 +269,8 @@ class BookRepositoryTest {
                 "Case of the Laughing Baboon",
                 Year.of(1945),
                 "Murat McCartney",
-                "fiction",
-                "fairy tale",
+                BookType.FICTION,
+                BookGenre.FOLKLORE,
                 4200
         );
         Book book4 = new Book(
@@ -276,8 +278,8 @@ class BookRepositoryTest {
                 "The Serpent in the Stars",
                 Year.of(1995),
                 "Tyra Daniels",
-                "nonfiction",
-                "psychology",
+                BookType.NON_FICTION,
+                BookGenre.PHILOSOPHICAL,
                 4200
         );
 

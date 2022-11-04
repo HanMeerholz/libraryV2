@@ -8,7 +8,11 @@ import lombok.Setter;
 import org.hibernate.Hibernate;
 
 import javax.persistence.*;
+import javax.validation.constraints.AssertTrue;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.PastOrPresent;
 import java.time.LocalDate;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
@@ -20,6 +24,8 @@ import java.util.Objects;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Membership {
+    public static final Period MAX_MEMBERSHIP_TIME = Period.ofYears(5);
+
     @Id
     @SequenceGenerator(
             name = "membership_sequence",
@@ -42,16 +48,20 @@ public class Membership {
             nullable = false,
             foreignKey = @ForeignKey(name = "FK_memberships_membership_type")
     )
+    @NotNull
     private MembershipType membershipType;
 
     @Column(
             name = "start_date"
     )
+    @NotNull
+    @PastOrPresent
     private LocalDate startDate;
 
     @Column(
             name = "end_date"
     )
+    @NotNull
     private LocalDate endDate;
 
     @OneToMany(mappedBy = "membership")
@@ -90,5 +100,19 @@ public class Membership {
                 "startDate = " + startDate + ", " +
                 "endDate = " + endDate + ", " +
                 "deleted = " + deleted + ")";
+    }
+
+    @AssertTrue(message = "Field `startDate` should be later than `endDate`")
+    private boolean isEndDateAfterStartDate() {
+        if (startDate != null && endDate != null)
+            return startDate.isBefore(endDate);
+        return true;
+    }
+
+    @AssertTrue(message = "Field `startDate` must be at most 5 years before `endDate`")
+    private boolean isValidMembershipTime() {
+        if (startDate != null && endDate != null)
+            return startDate.until(endDate).toTotalMonths() < MAX_MEMBERSHIP_TIME.toTotalMonths();
+        return true;
     }
 }
