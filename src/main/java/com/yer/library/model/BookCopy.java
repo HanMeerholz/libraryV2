@@ -1,5 +1,6 @@
 package com.yer.library.model;
 
+import com.yer.library.model.validators.ValidLocationConstraint;
 import lombok.*;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Columns;
@@ -46,6 +47,7 @@ public class BookCopy {
             @Column(name = "loc_shelve")
     })
     @Type(type = "com.yer.library.model.customtypes.LocationType")
+    @ValidLocationConstraint
     private Location location;
 
     @Column(name = "deleted")

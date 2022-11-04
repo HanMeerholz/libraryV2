@@ -1,9 +1,13 @@
 package com.yer.library.model;
 
+import com.yer.library.model.enums.MembershipTypeName;
 import lombok.*;
 import org.hibernate.Hibernate;
 
 import javax.persistence.*;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.Objects;
 
 @Entity(name = "MembershipType")
@@ -41,11 +45,14 @@ public class MembershipType {
             name = "type",
             nullable = false
     )
+    @NotNull
     MembershipTypeName type;
 
     @Column(
             name = "cost_per_month"
     )
+    @PositiveOrZero(message = "Monthly membership fee cannot be negative")
+    @Max(value = 9999, message = "Monthly membership fee can be no more than 9999 ($99,99)")
     int costPerMonth;
 
     public MembershipType(MembershipTypeName type, int costPerMonth) {

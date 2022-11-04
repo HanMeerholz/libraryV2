@@ -1,6 +1,9 @@
 package com.yer.library.config;
 
 import com.yer.library.model.*;
+import com.yer.library.model.enums.BookGenre;
+import com.yer.library.model.enums.BookType;
+import com.yer.library.model.enums.MembershipTypeName;
 import com.yer.library.repository.*;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -31,8 +34,8 @@ public class Initializer {
                     "The Girl in the Veil",
                     Year.of(1948),
                     "Cole Lyons",
-                    "fiction",
-                    "horror",
+                    BookType.FICTION,
+                    BookGenre.HORROR,
                     4200
             );
             Book book2 = new Book(
@@ -40,8 +43,8 @@ public class Initializer {
                     "Legacy Circling",
                     Year.of(2001),
                     "Arla Salgado",
-                    "fiction",
-                    "romantic drama",
+                    BookType.FICTION,
+                    BookGenre.ROMANCE,
                     4200
             );
             Book book3 = new Book(
@@ -49,8 +52,8 @@ public class Initializer {
                     "Case of the Laughing Baboon",
                     Year.of(1945),
                     "Murat McCartney",
-                    "fiction",
-                    "fairy tale",
+                    BookType.FICTION,
+                    BookGenre.FOLKLORE,
                     4200
             );
             Book book4 = new Book(
@@ -58,8 +61,8 @@ public class Initializer {
                     "The Serpent in the Stars",
                     Year.of(1995),
                     "Tyra Daniels",
-                    "nonfiction",
-                    "psychology",
+                    BookType.NON_FICTION,
+                    BookGenre.PHILOSOPHICAL,
                     4200
             );
             Book book5 = new Book(
@@ -67,8 +70,8 @@ public class Initializer {
                     "Crown of Truth",
                     Year.of(1909),
                     "Coral Truong",
-                    "fiction",
-                    "historical",
+                    BookType.FICTION,
+                    BookGenre.HISTORICAL,
                     4200
             );
 

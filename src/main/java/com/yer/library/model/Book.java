@@ -1,11 +1,14 @@
 package com.yer.library.model;
 
 import com.yer.library.model.attributeconverters.YearAttributeConverter;
+import com.yer.library.model.enums.BookGenre;
+import com.yer.library.model.enums.BookType;
 import lombok.*;
 import org.hibernate.Hibernate;
+import org.hibernate.validator.constraints.ISBN;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.*;
 import java.time.Year;
 import java.util.Objects;
 
@@ -46,7 +49,8 @@ public class Book {
             nullable = false,
             columnDefinition = "VARCHAR(17)"
     )
-    @NotEmpty(message = "ISBN cannot be empty or null")
+    @NotBlank(message = "ISBN cannot be blank or null")
+    @ISBN(message = "ISBN must be a valid ISBN 13")
     private String isbn;
 
     @Column(
@@ -54,7 +58,7 @@ public class Book {
             nullable = false,
             columnDefinition = "TEXT"
     )
-    @NotEmpty(message = "Title cannot be empty or null")
+    @NotBlank(message = "Title cannot be blank or null")
     private String title;
 
     @Column(
@@ -65,6 +69,7 @@ public class Book {
     @Convert(
             converter = YearAttributeConverter.class
     )
+    @PastOrPresent(message = "Release year must be in the past")
     private Year year;
 
     @Column(
@@ -74,21 +79,27 @@ public class Book {
     )
     private String author;
 
+    @Enumerated(EnumType.STRING)
     @Column(
             name = "type",
-            nullable = false,
-            columnDefinition = "TEXT"
+            nullable = false
     )
-    private String type;
+    @NotNull(message = "Must specify a book type (\"fiction\", \"non-fiction\", or \"other\")")
+    private BookType type;
+
+    @Enumerated(EnumType.STRING)
     @Column(
-            name = "genre",
-            columnDefinition = "TEXT"
+            name = "genre"
     )
-    private String genre;
+    @NotNull(message = "Must specify a book genre (\"other\" if no category fits)")
+    private BookGenre genre;
 
     @Column(
             name = "book_value"
     )
+    @NotNull
+    @PositiveOrZero(message = "Book value cannot be negative")
+    @Max(value = 99999, message = "Book value can be no more than 99999 ($999,99)")
     private Integer value;
 
     @Column(
@@ -96,7 +107,7 @@ public class Book {
     )
     private Boolean deleted = false;
 
-    public Book(String isbn, String title, Year year, String author, String type, String genre, Integer value) {
+    public Book(String isbn, String title, Year year, String author, BookType type, BookGenre genre, Integer value) {
         this.isbn = isbn;
         this.title = title;
         this.year = year;

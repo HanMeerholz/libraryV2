@@ -2,7 +2,7 @@ package com.yer.library.repository;
 
 import com.yer.library.model.Membership;
 import com.yer.library.model.MembershipType;
-import com.yer.library.model.MembershipTypeName;
+import com.yer.library.model.enums.MembershipTypeName;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;

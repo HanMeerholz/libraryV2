@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.fge.jsonpatch.JsonPatch;
 import com.github.fge.jsonpatch.JsonPatchException;
 import com.yer.library.model.Book;
+import com.yer.library.model.enums.BookGenre;
+import com.yer.library.model.enums.BookType;
 import com.yer.library.repository.BookRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,8 +52,8 @@ class BookServiceTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         book.setId(bookId);
@@ -77,8 +79,8 @@ class BookServiceTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         book.setId(bookId);
@@ -137,8 +139,8 @@ class BookServiceTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         Book expectedReturnedBook = new Book(
@@ -146,8 +148,8 @@ class BookServiceTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         expectedReturnedBook.setId(bookId);
@@ -174,8 +176,8 @@ class BookServiceTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         Book book2 = new Book(
@@ -183,8 +185,8 @@ class BookServiceTest {
                 "Legacy Circling",
                 Year.of(2001),
                 "Arla Salgado",
-                "fiction",
-                "romantic drama",
+                BookType.FICTION,
+                BookGenre.ROMANCE,
                 4200
         );
 
@@ -208,8 +210,8 @@ class BookServiceTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         deletedBookInDB.setId(deletedBookInDBId);
@@ -220,8 +222,8 @@ class BookServiceTest {
                 "Legacy Circling",
                 Year.of(2001),
                 "Arla Salgado",
-                "fiction",
-                "romantic drama",
+                BookType.FICTION,
+                BookGenre.ROMANCE,
                 4200
         );
 
@@ -230,8 +232,8 @@ class BookServiceTest {
                 "Legacy Circling",
                 Year.of(2001),
                 "Arla Salgado",
-                "fiction",
-                "romantic drama",
+                BookType.FICTION,
+                BookGenre.ROMANCE,
                 4200
         );
         expectedReturnedBook.setId(deletedBookInDBId);
@@ -261,8 +263,8 @@ class BookServiceTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         initialBook.setId(bookId);
@@ -272,8 +274,8 @@ class BookServiceTest {
                 "The Girls in the Veils",
                 Year.of(1947),
                 "Cole Lyon",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
 
@@ -282,8 +284,8 @@ class BookServiceTest {
                 "The Girls in the Veils",
                 Year.of(1947),
                 "Cole Lyon",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         expectedReturnedBook.setId(bookId);
@@ -315,8 +317,8 @@ class BookServiceTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         initialBook.setId(bookId);
@@ -327,8 +329,8 @@ class BookServiceTest {
                 "The Girls in the Veils",
                 Year.of(1947),
                 "Cole Lyon",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         updatedBook.setId(newBookId);
@@ -338,8 +340,8 @@ class BookServiceTest {
                 "The Girls in the Veils",
                 Year.of(1947),
                 "Cole Lyon",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         expectedReturnedBook.setId(bookId);
@@ -373,8 +375,8 @@ class BookServiceTest {
                 "The Girls in the Veils",
                 Year.of(1947),
                 "Cole Lyon",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         given(bookRepository.findById(bookId)).willReturn(Optional.empty());
@@ -400,8 +402,8 @@ class BookServiceTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         existingBook.setId(bookId);
@@ -412,8 +414,8 @@ class BookServiceTest {
                 "The Girls in the Veils",
                 Year.of(1947),
                 "Cole Lyon",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         given(bookRepository.findById(bookId)).willReturn(Optional.of(existingBook));
@@ -438,8 +440,8 @@ class BookServiceTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         existingBook1.setId(book1Id);
@@ -451,8 +453,8 @@ class BookServiceTest {
                 "Legacy Circling",
                 Year.of(2001),
                 "Arla Salgado",
-                "fiction",
-                "romantic drama",
+                BookType.FICTION,
+                BookGenre.ROMANCE,
                 4200
         );
         existingBook2.setId(book2Id);
@@ -462,8 +464,8 @@ class BookServiceTest {
                 "The Girls in the Veils",
                 Year.of(1947),
                 "Cole Lyon",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         given(bookRepository.findById(book1Id)).willReturn(Optional.of(existingBook1));
@@ -489,8 +491,8 @@ class BookServiceTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         existingBook.setId(bookId);
@@ -502,8 +504,8 @@ class BookServiceTest {
                 updatedTitle,
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         updatedBook.setId(bookId);
@@ -579,8 +581,8 @@ class BookServiceTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         existingBook.setId(bookId);
@@ -620,8 +622,8 @@ class BookServiceTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         existingBook1.setId(book1Id);
@@ -633,8 +635,8 @@ class BookServiceTest {
                 "Legacy Circling",
                 Year.of(2001),
                 "Arla Salgado",
-                "fiction",
-                "romantic drama",
+                BookType.FICTION,
+                BookGenre.ROMANCE,
                 4200
         );
         existingBook2.setId(book2Id);
@@ -675,8 +677,8 @@ class BookServiceTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         existingBook.setId(bookId);
@@ -722,8 +724,8 @@ class BookServiceTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         existingBook.setId(bookId);
@@ -749,8 +751,8 @@ class BookServiceTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         existingBook.setDeleted(true);

@@ -3,6 +3,8 @@ package com.yer.library.repository;
 import com.yer.library.model.Book;
 import com.yer.library.model.BookCopy;
 import com.yer.library.model.Location;
+import com.yer.library.model.enums.BookGenre;
+import com.yer.library.model.enums.BookType;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -48,8 +50,8 @@ class BookCopyRepositoryTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         Book book2 = new Book(
@@ -57,8 +59,8 @@ class BookCopyRepositoryTest {
                 "Legacy Circling",
                 Year.of(2001),
                 "Arla Salgado",
-                "fiction",
-                "romantic drama",
+                BookType.FICTION,
+                BookGenre.ROMANCE,
                 4200
         );
 
@@ -100,8 +102,8 @@ class BookCopyRepositoryTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         Book book2 = new Book(
@@ -109,8 +111,8 @@ class BookCopyRepositoryTest {
                 "Legacy Circling",
                 Year.of(2001),
                 "Arla Salgado",
-                "fiction",
-                "romantic drama",
+                BookType.FICTION,
+                BookGenre.ROMANCE,
                 4200
         );
         BookCopy bookCopy1 = new BookCopy(
@@ -145,8 +147,8 @@ class BookCopyRepositoryTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         Book book2 = new Book(
@@ -154,8 +156,8 @@ class BookCopyRepositoryTest {
                 "Legacy Circling",
                 Year.of(2001),
                 "Arla Salgado",
-                "fiction",
-                "romantic drama",
+                BookType.FICTION,
+                BookGenre.ROMANCE,
                 4200
         );
         Book book3 = new Book(
@@ -163,8 +165,8 @@ class BookCopyRepositoryTest {
                 "Case of the Laughing Baboon",
                 Year.of(1945),
                 "Murat McCartney",
-                "fiction",
-                "fairy tale",
+                BookType.FICTION,
+                BookGenre.FOLKLORE,
                 4200
         );
         book3.setDeleted(true);
@@ -231,8 +233,8 @@ class BookCopyRepositoryTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         BookCopy bookCopy1 = new BookCopy(
@@ -284,8 +286,8 @@ class BookCopyRepositoryTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         book.setId(bookId);
@@ -306,8 +308,8 @@ class BookCopyRepositoryTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
         book.setDeleted(true);
@@ -340,8 +342,8 @@ class BookCopyRepositoryTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
 
@@ -376,8 +378,8 @@ class BookCopyRepositoryTest {
                 "The Girl in the Veil",
                 Year.of(1948),
                 "Cole Lyons",
-                "fiction",
-                "horror",
+                BookType.FICTION,
+                BookGenre.HORROR,
                 4200
         );
 
