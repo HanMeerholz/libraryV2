@@ -31,7 +31,9 @@ To run the application, simply run the command `mvn spring-boot:run` from the ba
 Now you should be able to interact with all the [endpoints](#Endpoints) via `localhost:8080/[endpoint]`
 There is form-based authentication, thus in order to access the endpoints, you would need a username and password.
 A valid username/password combination you can use is:
+
 username: `testuser`
+
 password: `testpassword@`
 
 ## Entities
