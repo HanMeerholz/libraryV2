@@ -13,10 +13,10 @@ Not all the features of this project have been completed. For now it is possible
 
 ## Prerequisites
 ### Java 8
-The minimum required Java version is Java 8 ([download](https://www.oracle.com/nl/java/technologies/javase/javase8u211-later-archive-downloads.html))
+The minimum required Java version is Java 8 ([download](https://www.oracle.com/nl/java/technologies/javase/javase8u211-later-archive-downloads.html)). Make sure to get a Java JDK version, so you can run the Maven command later on.
 
 ### Maven
-Make sure Maven is [downloaded](https://maven.apache.org/download.cgi) and [installed](https://maven.apache.org/install.html).
+Make sure Maven is [downloaded](https://maven.apache.org/download.cgi) and [installed](https://maven.apache.org/install.html). Make sure that you JAVA_HOME environment variable is set to the right Java (JDK) version.
 
 ### MySQL
 This application uses a MySQL database. First, make sure MySQL is [downloaded](https://dev.mysql.com/downloads/) and [installed](https://dev.mysql.com/doc/mysql-installation-excerpt/5.7/en/).
