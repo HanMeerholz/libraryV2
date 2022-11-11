@@ -15,12 +15,15 @@ Not all the features of this project have been completed. For now it is possible
 ### Java 8
 The minimum required Java version is Java 8 ([download](https://www.java.com/en/download/manual.jsp))
 
-### MySQL
-This application uses a MySQL database. Make sure to create an empty schema named `libary`, run MySQL on the port `3306`, and create a user `testuser` with password `testpassword` that has Object and DDL rights.
-If you wish to change the schema name, port, or user username and password, you can do so in the `src/main/resources/application.properties` file.
-
 ### Maven
 Make sure Maven is [downloaded](https://maven.apache.org/download.cgi) and [installed](https://maven.apache.org/install.html).
+
+### MySQL
+This application uses a MySQL database. First, make sure MySQL is [downloaded](https://dev.mysql.com/downloads/) and [installed](https://dev.mysql.com/doc/mysql-installation-excerpt/5.7/en/).
+
+Then, create an empty schema named `libary`, run MySQL on the port `3306`, and create a user `testuser` with password `testpassword` that has Object and DDL rights.
+If you wish to change the schema name, port, or user username and password, you can do so in the `src/main/resources/application.properties` file.
+
 
 ## Installation
 To install this application, download a zip file of this repository, and extract the files to a directory of your liking.
