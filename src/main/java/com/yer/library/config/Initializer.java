@@ -5,9 +5,11 @@ import com.yer.library.model.enums.BookGenre;
 import com.yer.library.model.enums.BookType;
 import com.yer.library.model.enums.MembershipTypeName;
 import com.yer.library.repository.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
@@ -21,13 +23,21 @@ import java.util.Collections;
 @Configuration
 public class Initializer {
 
+    private final PasswordEncoder passwordEncoder;
+
+    @Autowired
+    public Initializer(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
+    }
+
     @Bean
     CommandLineRunner commandLineRunner(
             BookRepository bookRepository,
             BookCopyRepository bookCopyRepository,
             MembershipTypeRepository membershipTypeRepository,
             MembershipRepository membershipRepository,
-            MemberRepository memberRepository) {
+            MemberRepository memberRepository,
+            UserRepository userRepository) {
         return args -> {
             Book book1 = new Book(
                     "978-2-3915-3957-4",
@@ -206,6 +216,20 @@ public class Initializer {
 
             memberRepository.saveAll(Collections.unmodifiableList(Arrays.asList(
                     member1, member2, member3, member4, member5, member6, member7, member8)));
+
+            User user1 = new User(
+                    "testuser", passwordEncoder.encode("testpassword@")
+            );
+            User user2 = new User(
+                    "Han", passwordEncoder.encode("42_lifeUniverseEverything")
+            );
+            User user3 = new User(
+                    "Jesper", passwordEncoder.encode("makeupyourown")
+            );
+
+            userRepository.saveAll(Collections.unmodifiableList(Arrays.asList(
+                    user1, user2, user3
+            )));
         };
     }
 
